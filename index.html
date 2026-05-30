@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>华南理工大学校园百事通</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "微软雅黑", sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: #2d8cf0;
+            color: white;
+            padding: 16px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            margin: 20px auto;
+            width: 95%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .chat-history {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 600px;
+            background-color: #f9fafc;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            max-width: 80%;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            margin-left: auto;
+        }
+
+        .user-message .bubble {
+            background: #2d8cf0;
+            color: white;
+            border-radius: 18px 18px 4px 18px;
+            padding: 12px 18px;
+        }
+
+        .ai-message {
+            margin-right: auto;
+        }
+
+        .ai-message .bubble {
+            background: white;
+            border: 1px solid #e5e9f2;
+            border-radius: 18px 18px 18px 4px;
+            padding: 12px 18px;
+            color: #333;
+        }
+
+        .input-area {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid #e5e9f2;
+            background: white;
+        }
+
+        #question-input {
+            flex: 1;
+            padding: 12px 18px;
+            border: 1px solid #e5e9f2;
+            border-radius: 25px;
+            outline: none;
+            font-size: 15px;
+            resize: none;
+            height: 50px;
+            max-height: 150px;
+        }
+
+        #send-btn {
+            margin-left: 10px;
+            padding: 0 20px;
+            border: none;
+            border-radius: 25px;
+            background: #2d8cf0;
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        #send-btn:hover {
+            background: #1b79d8;
+        }
+
+        #send-btn:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+        }
+
+        .loading-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #2d8cf0;
+            animation: bounce 1s infinite alternate;
+        }
+
+        .loading-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-8px); }
+        }
+    </style>
+</head>
+<body>
+    <header>华南理工大学 · 校园百事通</header>
+
+    <div class="chat-container">
+        <div class="chat-history" id="chat-history">
+            <div class="ai-message message">
+                <div class="bubble">
+                    你好！我是华南理工大学校园百事通AI，有任何校园相关问题都可以问我～
+                </div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <textarea id="question-input" placeholder="请输入你的问题（例如：校园卡丢了怎么办？）" 
+                      onkeydown="if(event.keyCode===13&&!event.shiftKey){event.preventDefault();sendQuestion();}"></textarea>
+            <button id="send-btn" onclick="sendQuestion()">发送</button>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = "http://localhost:8080";
+        
+        async function sendQuestion() {
+            const inputEl = document.getElementById('question-input');
+            const sendBtn = document.getElementById('send-btn');
+            const chatHistory = document.getElementById('chat-history');
+            
+            const question = inputEl.value.trim();
+            if (!question) {
+                alert("请输入你的问题！");
+                return;
+            }
+
+            sendBtn.disabled = true;
+            inputEl.value = "";
+
+            chatHistory.innerHTML += `
+                <div class="user-message message">
+                    <div class="bubble">${question}</div>
+                </div>
+            `;
+
+            const loadingId = `loading-${Date.now()}`;
+            chatHistory.innerHTML += `
+                <div class="ai-message message" id="${loadingId}">
+                    <div class="bubble loading">
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                    </div>
+                </div>
+            `;
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+
+            try {
+                const response = await fetch(
+                    `${BASE_URL}/question/ask?question=${encodeURIComponent(question)}`
+                );
+
+                if (!response.ok) {
+                    throw new Error(`接口请求失败：${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                document.getElementById(loadingId).remove();
+                chatHistory.innerHTML += `
+                    <div class="ai-message message">
+                        <div class="bubble">${result.data || "暂无相关回答"}</div>
+                    </div>
+                `;
+
+            } catch (error) {
+                document.getElementById(loadingId).remove();
+                chatHistory.innerHTML += `
+                    <div class="ai-message message">
+                        <div class="bubble" style="color: #ff4d4f;">
+                            抱歉，获取回答失败：${error.message}
+                        </div>
+                    </div>
+                `;
+            } finally {
+                sendBtn.disabled = false;
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            }
+        }
+    </script>
+</body>
+</html>
