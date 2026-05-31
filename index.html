@@ -89,17 +89,6 @@
             border-bottom-right-radius: 6px;
         }
 
-        .deep-search-tag {
-            display: inline-block;
-            background: #ff7d00;
-            color: white;
-            font-size: 12px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-left: 8px;
-            vertical-align: middle;
-        }
-
         .input-area {
             padding: 15px;
             border-top: 1px solid #eee;
@@ -123,15 +112,6 @@
 
         #question-input:focus {
             border-color: #409eff;
-        }
-
-        .deep-option {
-            white-space: nowrap;
-            font-size: 14px;
-            color: #666;
-            display: flex;
-            align-items: center;
-            gap: 4px;
         }
 
         #send-btn {
@@ -171,8 +151,7 @@
         <div id="chat-messages" class="chat-messages">
             <div class="ai-message message">
                 <div class="bubble">
-                    你好！我是校园百事通AI，有任何校园问题都可以问我～<br>
-                    <small style="color:#888">提示：勾选「深度搜索」可获取更详细回答</small>
+                    你好！我是校园百事通AI，有任何校园问题都可以问我～
                 </div>
             </div>
         </div>
@@ -181,10 +160,6 @@
             <textarea id="question-input"
                       placeholder="请输入你的问题（例：校园卡丢了怎么办？）"
                       onkeydown="if(event.keyCode===13&&!event.shiftKey){event.preventDefault();sendQuestion();}"></textarea>
-            
-            <label class="deep-option">
-                <input type="checkbox" id="deep-search-checkbox"> 深度搜索
-            </label>
             
             <button id="send-btn" onclick="sendQuestion()">发送</button>
         </div>
@@ -225,7 +200,6 @@
         async function sendQuestion() {
             const inputEl = document.getElementById("question-input");
             const sendBtn = document.getElementById("send-btn");
-            const deepCheckbox = document.getElementById("deep-search-checkbox");
             const chatEl = document.getElementById("chat-messages");
 
             // 去空格
@@ -238,15 +212,10 @@
             inputEl.disabled = true;
             inputEl.value = "";
 
-            // 读取深度搜索状态
-            const isDeep = deepCheckbox.checked;
-            deepCheckbox.checked = false;
-
             // 拼接用户消息
-            const deepTag = isDeep ? '<span class="deep-search-tag">深度搜索</span>' : "";
             chatEl.innerHTML += `
                 <div class="user-message message">
-                    <div class="bubble">${question}${deepTag}</div>
+                    <div class="bubble">${question}</div>
                 </div>
             `;
 
@@ -256,9 +225,8 @@
             chatEl.scrollTop = chatEl.scrollHeight;
 
             try {
-                // 拼接请求地址（完全遵循文档规范）
-                let url = `${BASE_URL}/question/ask?question=${encodeURIComponent(question)}`;
-                if (isDeep) url += "&deep=true";
+                // 拼接请求地址（不传递深度搜索参数，由后端自动处理）
+                const url = `${BASE_URL}/question/ask?question=${encodeURIComponent(question)}`;
 
                 // 10秒超时控制
                 const controller = new AbortController();
@@ -273,7 +241,7 @@
                 document.getElementById(loadingId).remove();
 
                 // 渲染回复
-                let answer = result.data || "暂无相关回答，你可以：<br>• 检查问题描述是否准确<br>• 勾选深度搜索重试<br>• 简化关键词后提问";
+                let answer = result.data || "暂无相关回答，你可以：<br>• 检查问题描述是否准确<br>• 简化关键词后提问";
                 chatEl.innerHTML += `
                     <div class="ai-message message">
                         <div class="bubble">${answer}</div>
