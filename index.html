@@ -297,12 +297,12 @@
             <div class="modal-title">用户登录</div>
             <div class="form-item">
                 <label for="login-username">用户名</label>
-                <input type="text" id="login-username" placeholder="请输入用户名">
+                <input type="text" id="login-username" placeholder="3-20位英文/数字/下划线">
                 <div class="error-msg" id="login-username-err"></div>
             </div>
             <div class="form-item">
                 <label for="login-password">密码</label>
-                <input type="password" id="login-password" placeholder="请输入密码">
+                <input type="password" id="login-password" placeholder="至少6位字符">
                 <div class="error-msg" id="login-password-err"></div>
             </div>
             <div class="error-msg" id="login-err"></div>
@@ -389,6 +389,8 @@
                 logoutBtn.classList.remove("hidden");
                 if (isAdmin) {
                     adminOption.style.display = "flex";
+                } else {
+                    adminOption.style.display = "none";
                 }
             } else {
                 loginBtn.textContent = "登录/注册";
@@ -398,17 +400,28 @@
             }
         }
 
-        // 检查Token有效性
+        // 检查Token有效性（严格按API返回格式处理）
         async function checkTokenValid() {
             try {
                 const res = await fetch(`${BASE_URL}/user/me?token=${token}`);
+                // 先判断响应状态码
+                if (!res.ok) {
+                    throw new Error("Token验证接口响应失败");
+                }
                 const result = await res.json();
+                // 严格匹配API的成功码200
                 if (result.code !== 200) {
                     // Token无效，清空本地存储
                     clearUserInfo();
                     initUserStatus();
+                    return;
                 }
+                // 同步最新的管理员状态
+                isAdmin = result.data.admin || false;
+                localStorage.setItem("isAdmin", isAdmin);
+                initUserStatus();
             } catch (err) {
+                console.error("Token验证失败：", err);
                 clearUserInfo();
                 initUserStatus();
             }
@@ -422,6 +435,7 @@
             localStorage.removeItem("token");
             localStorage.removeItem("username");
             localStorage.removeItem("isAdmin");
+            localStorage.removeItem("deepSearchEnabled");
         }
 
         // 健康检查
@@ -429,6 +443,11 @@
             const el = document.getElementById("health-status");
             try {
                 const r = await fetch(`${BASE_URL}/health`);
+                if (!r.ok) {
+                    el.textContent = "服务异常";
+                    el.style.background = "rgba(255,70,70,0.2)";
+                    return;
+                }
                 const j = await r.json();
                 if (j.code === 200) {
                     el.textContent = "服务正常";
@@ -438,12 +457,13 @@
                     el.style.background = "rgba(255,70,70,0.2)";
                 }
             } catch (e) {
+                console.error("健康检查失败：", e);
                 el.textContent = "服务未启动";
                 el.style.background = "rgba(255,70,70,0.2)";
             }
         }
 
-        // 发送问题核心逻辑
+        // 发送问题核心逻辑（适配API的参数规则）
         async function sendQuestion() {
             const input = document.getElementById("question-input");
             const btn = document.getElementById("send-btn");
@@ -476,32 +496,45 @@
             chat.scrollTop = chat.scrollHeight;
 
             try {
-                // 构建请求参数
+                // 构建请求参数（严格按API文档）
                 const params = new URLSearchParams();
                 params.set("question", q);
                 if (isDeep) params.set("deep", "true");
                 if (isAdminMode) params.set("admin", "true");
                 if (token) params.set("token", token);
 
-                // 发送请求
+                // 发送请求（超时时间延长到15秒，适配管理员模式的处理耗时）
                 const ctrl = new AbortController();
-                const timer = setTimeout(() => ctrl.abort(), 10000);
-                const res = await fetch(`${BASE_URL}/question/ask?${params.toString()}`, { signal: ctrl.signal });
+                const timer = setTimeout(() => ctrl.abort(), 15000);
+                const res = await fetch(`${BASE_URL}/question/ask?${params.toString()}`, { 
+                    signal: ctrl.signal,
+                    method: "GET", // 明确指定GET方法（API要求）
+                    headers: {
+                        "Accept": "application/json"
+                    }
+                });
                 clearTimeout(timer);
+
+                if (!res.ok) {
+                    throw new Error(`请求失败：${res.status} ${res.statusText}`);
+                }
+
                 const result = await res.json();
 
                 // 移除加载状态
-                document.getElementById(loadingId).remove();
+                const loadingEl = document.getElementById(loadingId);
+                if (loadingEl) loadingEl.remove();
 
-                // 处理返回结果
-                let answer = result.data || "暂无相关回答，可简化问题重试";
-                answer = answer.replace(/（根据知识库信息）/g, "").trim();
-                
-                // 管理员模式错误提示处理
-                if (result.code !== 200) {
+                // 处理返回结果（严格按API的code规则）
+                let answer = "";
+                if (result.code === 200) {
+                    answer = result.data || "暂无相关回答，可简化问题重试";
+                } else {
                     answer = result.msg || "请求失败，请重试";
                 }
-
+                // 清理回答中的冗余文本
+                answer = answer.replace(/（根据知识库信息）/g, "").trim();
+                
                 // 添加AI回答到聊天框
                 chat.innerHTML += `
                 <div class="ai-message message">
@@ -510,12 +543,18 @@
 
             } catch (err) {
                 // 异常处理
-                document.getElementById(loadingId).remove();
-                const msg = err.name === "AbortError" ? "请求超时，请重试" : "请求失败：" + err.message;
+                const loadingEl = document.getElementById(loadingId);
+                if (loadingEl) loadingEl.remove();
+                
+                const msg = err.name === "AbortError" 
+                    ? "请求超时（管理员模式处理可能需要更长时间），请重试" 
+                    : `请求失败：${err.message}`;
+                
                 chat.innerHTML += `
                 <div class="ai-message message">
                     <div class="bubble" style="color:#f56c6c">${msg}</div>
                 </div>`;
+                console.error("发送问题失败：", err);
             } finally {
                 isRequesting = false;
                 btn.disabled = false;
@@ -568,22 +607,29 @@
             showLoginModal();
         }
 
-        // 执行登录
+        // 执行登录（修复核心异常点）
         async function doLogin() {
             const usernameEl = document.getElementById("login-username");
             const passwordEl = document.getElementById("login-password");
-            const username = usernameEl.value.trim();
-            const password = passwordEl.value.trim();
+            const usernameVal = usernameEl.value.trim();
+            const passwordVal = passwordEl.value.trim();
             let hasError = false;
 
-            // 前端校验
+            // 前端校验（严格匹配API规则）
             clearLoginErrors();
-            if (!username) {
+            const usernameReg = /^[a-zA-Z0-9_]{3,20}$/;
+            if (!usernameVal) {
                 document.getElementById("login-username-err").textContent = "请输入用户名";
                 hasError = true;
+            } else if (!usernameReg.test(usernameVal)) {
+                document.getElementById("login-username-err").textContent = "用户名只能包含英文、数字、下划线，长度3-20位";
+                hasError = true;
             }
-            if (!password) {
+            if (!passwordVal) {
                 document.getElementById("login-password-err").textContent = "请输入密码";
+                hasError = true;
+            } else if (passwordVal.length < 6) {
+                document.getElementById("login-password-err").textContent = "密码长度至少6位";
                 hasError = true;
             }
             if (hasError) return;
@@ -591,53 +637,70 @@
             try {
                 const res = await fetch(`${BASE_URL}/user/login`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ username, password })
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify({ 
+                        username: usernameVal, 
+                        password: passwordVal 
+                    })
                 });
+
+                // 先判断响应状态码
+                if (!res.ok) {
+                    throw new Error(`登录接口响应失败：${res.status}`);
+                }
+
                 const result = await res.json();
 
+                // 严格按API的code判断成功（核心修复点）
                 if (result.code === 200) {
-                    // 登录成功，保存用户信息
-                    token = result.data.token;
-                    username = result.data.username;
-                    isAdmin = result.data.admin;
+                    // 登录成功，保存用户信息（严格读取API返回的data字段）
+                    token = result.data.token || "";
+                    username = result.data.username || "";
+                    isAdmin = result.data.admin || false;
+                    
+                    // 本地存储持久化
                     localStorage.setItem("token", token);
                     localStorage.setItem("username", username);
                     localStorage.setItem("isAdmin", isAdmin);
                     
                     hideLoginModal();
                     initUserStatus();
+                    alert("登录成功！");
                 } else {
-                    // 登录失败
-                    document.getElementById("login-err").textContent = result.msg || "登录失败";
+                    // 登录失败（显示API返回的错误信息）
+                    document.getElementById("login-err").textContent = result.msg || "登录失败：用户名或密码错误";
                 }
             } catch (err) {
-                document.getElementById("login-err").textContent = "网络异常，请重试";
+                console.error("登录请求失败：", err);
+                document.getElementById("login-err").textContent = "网络异常或服务未响应，请重试";
             }
         }
 
-        // 执行注册
+        // 执行注册（修复核心异常点）
         async function doRegister() {
             const usernameEl = document.getElementById("register-username");
             const passwordEl = document.getElementById("register-password");
-            const username = usernameEl.value.trim();
-            const password = passwordEl.value.trim();
+            const usernameVal = usernameEl.value.trim();
+            const passwordVal = passwordEl.value.trim();
             let hasError = false;
 
-            // 前端校验
+            // 前端校验（严格匹配API规则）
             clearRegisterErrors();
             const usernameReg = /^[a-zA-Z0-9_]{3,20}$/;
-            if (!username) {
+            if (!usernameVal) {
                 document.getElementById("register-username-err").textContent = "请输入用户名";
                 hasError = true;
-            } else if (!usernameReg.test(username)) {
+            } else if (!usernameReg.test(usernameVal)) {
                 document.getElementById("register-username-err").textContent = "用户名只能包含英文、数字、下划线，长度3-20位";
                 hasError = true;
             }
-            if (!password) {
+            if (!passwordVal) {
                 document.getElementById("register-password-err").textContent = "请输入密码";
                 hasError = true;
-            } else if (password.length < 6) {
+            } else if (passwordVal.length < 6) {
                 document.getElementById("register-password-err").textContent = "密码长度至少6位";
                 hasError = true;
             }
@@ -646,21 +709,33 @@
             try {
                 const res = await fetch(`${BASE_URL}/user/register`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ username, password })
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify({ 
+                        username: usernameVal, 
+                        password: passwordVal 
+                    })
                 });
+
+                if (!res.ok) {
+                    throw new Error(`注册接口响应失败：${res.status}`);
+                }
+
                 const result = await res.json();
 
                 if (result.code === 200) {
-                    // 注册成功，自动登录
-                    alert("注册成功，请登录");
+                    // 注册成功，自动切换到登录
+                    alert("注册成功，请登录！");
                     switchToLogin();
                 } else {
-                    // 注册失败
-                    document.getElementById("register-err").textContent = result.msg || "注册失败";
+                    // 注册失败（显示API返回的错误信息）
+                    document.getElementById("register-err").textContent = result.msg || "注册失败，请更换用户名重试";
                 }
             } catch (err) {
-                document.getElementById("register-err").textContent = "网络异常，请重试";
+                console.error("注册请求失败：", err);
+                document.getElementById("register-err").textContent = "网络异常或服务未响应，请重试";
             }
         }
 
@@ -668,11 +743,16 @@
         function logout() {
             clearUserInfo();
             initUserStatus();
+            alert("已退出登录");
         }
 
-        // 查看聊天记录
+        // 查看聊天记录（修复解析逻辑）
         async function showHistory() {
-            if (!token) return;
+            if (!token) {
+                alert("请先登录后查看聊天记录");
+                showLoginModal();
+                return;
+            }
 
             const historyList = document.getElementById("history-list");
             historyList.innerHTML = '<div class="loading">加载中...</div>';
@@ -680,29 +760,40 @@
 
             try {
                 const res = await fetch(`${BASE_URL}/user/history?token=${token}`);
+                if (!res.ok) {
+                    throw new Error(`获取记录失败：${res.status}`);
+                }
+
                 const result = await res.json();
 
-                if (result.code === 200 && result.data.length > 0) {
-                    let html = "";
-                    result.data.forEach(item => {
-                        try {
-                            const data = JSON.parse(item);
-                            const time = new Date(data.time).toLocaleString();
-                            html += `
-                            <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #eee;">
-                                <div style="font-size: 12px; color: #999; margin-bottom: 8px;">${time}</div>
-                                <div style="margin-bottom: 4px;"><strong>问题：</strong>${data.question}</div>
-                                <div><strong>回答：</strong>${data.answer}</div>
-                            </div>`;
-                        } catch (err) {
-                            html += `<div style="color: #f56c6c; margin-bottom: 16px;">记录解析失败：${item}</div>`;
-                        }
-                    });
-                    historyList.innerHTML = html;
+                if (result.code === 200) {
+                    const records = result.data || [];
+                    if (records.length > 0) {
+                        let html = "";
+                        records.forEach((item, index) => {
+                            try {
+                                // 解析API返回的JSON字符串（核心修复点）
+                                const data = typeof item === "string" ? JSON.parse(item) : item;
+                                const time = new Date(data.time).toLocaleString("zh-CN");
+                                html += `
+                                <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #eee;">
+                                    <div style="font-size: 12px; color: #999; margin-bottom: 8px;">${time}（第${index+1}条）</div>
+                                    <div style="margin-bottom: 4px;"><strong>问题：</strong>${data.question || "无"}</div>
+                                    <div><strong>回答：</strong>${data.answer || "无"}</div>
+                                </div>`;
+                            } catch (err) {
+                                html += `<div style="color: #f56c6c; margin-bottom: 16px;">第${index+1}条记录解析失败：${err.message}</div>`;
+                            }
+                        });
+                        historyList.innerHTML = html;
+                    } else {
+                        historyList.innerHTML = '<div style="text-align: center; color: #999; padding: 20px 0;">暂无聊天记录</div>';
+                    }
                 } else {
-                    historyList.innerHTML = '<div style="text-align: center; color: #999; padding: 20px 0;">暂无聊天记录</div>';
+                    historyList.innerHTML = `<div style="color: #f56c6c; text-align: center; padding: 20px 0;">${result.msg || "获取记录失败"}</div>`;
                 }
             } catch (err) {
+                console.error("获取聊天记录失败：", err);
                 historyList.innerHTML = `<div style="color: #f56c6c; text-align: center; padding: 20px 0;">加载失败：${err.message}</div>`;
             }
         }
@@ -711,10 +802,13 @@
             document.getElementById("history-modal").classList.add("hidden");
         }
 
-        // 绑定按钮事件
+        // 绑定按钮事件（修复登录按钮逻辑）
         document.getElementById("login-btn").addEventListener("click", function() {
             if (!token) {
                 showLoginModal();
+            } else {
+                // 已登录时点击显示用户名提示
+                alert(`当前登录账号：${username}`);
             }
         });
 
