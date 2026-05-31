@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>校园百事通AI</title>
+    <title>华南理工校园百事通</title>
     <style>
         * {
             margin: 0;
@@ -145,21 +145,272 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <span>校园百事通AI助手</span>
+            <span>华南理工校园百事通</span>
             <span id="health-status" class="health-status">检查服务中...</span>
         </div>
 
         <div id="chat-messages" class="chat-messages">
             <div class="ai-message message">
                 <div class="bubble">
-                    你好！我是校园百事通AI，有任何校园问题都可以问我～
+                    你好！我是校园百事通，有任何校园问题都可以问我～
                 </div>
             </div>
         </div>
 
         <div class="input-area">
             <textarea id="question-input"
-                      placeholder="请输入你的问题（例：校园卡丢了怎么办？）"
+                      placeholder="请输入你的问题"
+                      onkeydown="if(event.keyCode===13&&!event.shiftKey){event.preventDefault();sendQuestion();}"></textarea>
+            <button id="send-btn" onclick="sendQuestion()">发送</button>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = "https://backup.u850688.nyat.app:44399";
+        let isRequesting = false;
+
+        window.onload = function () {
+            checkBackendHealth();
+            setInterval(checkBackendHealth, 30000);
+        };
+
+        async function checkBackendHealth() {
+            const statusEl = document.getElementById("health-status");
+            try {
+                const res = await fetch(`${BASE_URL}/health`);
+                const result = await res.json();
+                if (result.code === 200) {
+                    statusEl.textContent = "服务正常 ✅";
+                    statusEl.style.background = "rgba(0, 210, 110, 0.2)";
+                } else {
+                    statusEl.textContent = "服务异常 ❌";
+                    statusEl.style.background = "rgba(255, 70, 70, 0.2)";
+                }
+            } catch (e) {
+                statusEl.textContent = "服务未启动 ❌";
+                statusEl.style.background = "rgba(255, 70, 70, 0.2)";
+            }
+        }
+
+        async function sendQuestion() {
+            const inputEl = document.getElementById("question-input");
+            const sendBtn = document.getElementById("send-btn");
+            const chatEl = document.getElementById("chat-messages");
+
+            let question = inputEl.value.trim();
+            if (!question || isRequesting) return;
+
+            isRequesting = true;
+            sendBtn.disabled = true;
+            inputEl.disabled = true;
+            inputEl.value = "";
+
+            chatEl.innerHTML += `
+                <div class="user-message message">
+                    <div class="bubble">${question}</div>
+                </div>
+            `;
+
+            const loadingId = "loading-" + Date.now();
+            chatEl.innerHTML += `<div id="${loadingId}" class="loading">AI 思考中...</div>`;
+            chatEl.scrollTop = chatEl.scrollHeight;
+
+            try {
+                const url = `${BASE_URL}/question/ask?question=${encodeURIComponent(question)}`;
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 10000);
+
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(timer);
+                const result = await response.json();
+
+                document.getElementById(loadingId).remove();
+                let answer = result.data || "暂无相关回答，你可以：<br>• 检查问题描述是否准确<br>• 简化关键词后提问";
+                chatEl.innerHTML += `
+                    <div class="ai-message message">
+                        <div class="bubble">${answer}</div>
+                    </div>
+                `;
+            } catch (err) {
+                document.getElementById(loadingId).remove();
+                let errMsg = err.name === "AbortError" ? "请求超时，请重试" : "请求失败：" + err.message;
+                chatEl.innerHTML += `
+                    <div class="ai-message message">
+                        <div class="bubble" style="color:#f56c6c">${errMsg}</div>
+                    </div>
+                `;
+            } finally {
+                isRequesting = false;
+                sendBtn.disabled = false;
+                inputEl.disabled = false;
+                inputEl.focus();
+                chatEl.scrollTop = chatEl.scrollHeight;
+            }
+        }
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>华南理工校园百事通</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        /* 全屏基础重置 */
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #f5f7fa;
+        }
+
+        /* 主容器全屏填充 */
+        .chat-container {
+            width: 100vw;
+            height: 100vh;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 16px 20px;
+            background: #409eff;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .health-status {
+            font-size: 14px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            max-width: 80%;
+            display: flex;
+        }
+
+        .ai-message {
+            align-self: flex-start;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .bubble {
+            padding: 12px 16px;
+            border-radius: 18px;
+            line-height: 1.6;
+            word-wrap: break-word;
+        }
+
+        .ai-message .bubble {
+            background: #f1f3f4;
+            color: #333;
+            border-bottom-left-radius: 6px;
+        }
+
+        .user-message .bubble {
+            background: #409eff;
+            color: white;
+            border-bottom-right-radius: 6px;
+        }
+
+        .input-area {
+            padding: 15px;
+            border-top: 1px solid #eee;
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        #question-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            resize: none;
+            min-height: 48px;
+            max-height: 120px;
+            outline: none;
+            font-size: 14px;
+            transition: border 0.2s;
+        }
+
+        #question-input:focus {
+            border-color: #409eff;
+        }
+
+        #send-btn {
+            padding: 12px 20px;
+            background: #409eff;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        #send-btn:hover {
+            background: #338eef;
+        }
+
+        #send-btn:disabled {
+            background: #a0cfff;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            color: #999;
+            font-size: 14px;
+            padding: 8px 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <span>华南理工校园百事通</span>
+            <span id="health-status" class="health-status">检查服务中...</span>
+        </div>
+
+        <div id="chat-messages" class="chat-messages">
+            <div class="ai-message message">
+                <div class="bubble">
+                    你好！我是校园百事通，有任何校园问题都可以问我～
+                </div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <textarea id="question-input"
+                      placeholder="请输入你的问题"
                       onkeydown="if(event.keyCode===13&&!event.shiftKey){event.preventDefault();sendQuestion();}"></textarea>
             <button id="send-btn" onclick="sendQuestion()">发送</button>
         </div>
