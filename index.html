@@ -12,18 +12,19 @@
             font-family: "Microsoft YaHei", sans-serif;
         }
 
-        body {
+        /* 全屏基础重置 */
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
             background-color: #f5f7fa;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
         }
 
+        /* 主容器全屏填充 */
         .chat-container {
+            width: 100vw;
+            height: 100vh;
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
-            height: calc(100vh - 120px);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -160,24 +161,19 @@
             <textarea id="question-input"
                       placeholder="请输入你的问题（例：校园卡丢了怎么办？）"
                       onkeydown="if(event.keyCode===13&&!event.shiftKey){event.preventDefault();sendQuestion();}"></textarea>
-            
             <button id="send-btn" onclick="sendQuestion()">发送</button>
         </div>
     </div>
 
     <script>
-        // 基础配置
         const BASE_URL = "https://backup.u850688.nyat.app:44399";
         let isRequesting = false;
 
-        // 页面加载完成后执行
         window.onload = function () {
             checkBackendHealth();
-            // 每30秒自动检查后端状态
             setInterval(checkBackendHealth, 30000);
         };
 
-        // 后端健康检查
         async function checkBackendHealth() {
             const statusEl = document.getElementById("health-status");
             try {
@@ -196,58 +192,45 @@
             }
         }
 
-        // 发送问题
         async function sendQuestion() {
             const inputEl = document.getElementById("question-input");
             const sendBtn = document.getElementById("send-btn");
             const chatEl = document.getElementById("chat-messages");
 
-            // 去空格
             let question = inputEl.value.trim();
             if (!question || isRequesting) return;
 
-            // 锁定状态
             isRequesting = true;
             sendBtn.disabled = true;
             inputEl.disabled = true;
             inputEl.value = "";
 
-            // 拼接用户消息
             chatEl.innerHTML += `
                 <div class="user-message message">
                     <div class="bubble">${question}</div>
                 </div>
             `;
 
-            // 加载提示
             const loadingId = "loading-" + Date.now();
             chatEl.innerHTML += `<div id="${loadingId}" class="loading">AI 思考中...</div>`;
             chatEl.scrollTop = chatEl.scrollHeight;
 
             try {
-                // 拼接请求地址（不传递深度搜索参数，由后端自动处理）
                 const url = `${BASE_URL}/question/ask?question=${encodeURIComponent(question)}`;
-
-                // 10秒超时控制
                 const controller = new AbortController();
                 const timer = setTimeout(() => controller.abort(), 10000);
 
-                // 请求接口
                 const response = await fetch(url, { signal: controller.signal });
                 clearTimeout(timer);
                 const result = await response.json();
 
-                // 移除加载
                 document.getElementById(loadingId).remove();
-
-                // 渲染回复
                 let answer = result.data || "暂无相关回答，你可以：<br>• 检查问题描述是否准确<br>• 简化关键词后提问";
                 chatEl.innerHTML += `
                     <div class="ai-message message">
                         <div class="bubble">${answer}</div>
                     </div>
                 `;
-
             } catch (err) {
                 document.getElementById(loadingId).remove();
                 let errMsg = err.name === "AbortError" ? "请求超时，请重试" : "请求失败：" + err.message;
@@ -257,7 +240,6 @@
                     </div>
                 `;
             } finally {
-                // 解锁
                 isRequesting = false;
                 sendBtn.disabled = false;
                 inputEl.disabled = false;
