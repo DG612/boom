@@ -459,6 +459,11 @@
                 onclick="createNewChat()">
                 + 新对话
             </div>
+
+            <div class="history-label" style="font-size:13px;color:#999;margin:6px 0 4px 4px;">
+                历史记录
+            </div>
+
             <div id="history-list"
                 class="history-records">
             </div>
@@ -539,7 +544,7 @@
     </div>
 
     <script>
-        const BASE_URL = "https://backup.u850688.nyat.app:44399";
+        const BASE_URL = "https://backup.u850688.nyat.app:54767";
         let isRequesting = false;
         let token = localStorage.getItem("token") || "";
         let username = localStorage.getItem("username") || "";
@@ -571,6 +576,10 @@
             if (token) {
                 checkTokenValid();
             }
+
+            window.addEventListener("beforeunload", function(){
+                saveCurrentConversation();
+            });
         };
 
         // 初始化用户状态UI
@@ -755,8 +764,6 @@
                     role:"assistant",
                     content:answer
                 });
-
-                saveConversation(q);
 
             } catch (err) {
                 // 异常处理
@@ -960,10 +967,16 @@
         function logout() {
             clearUserInfo();
             initUserStatus();
+            // 清空内存中的历史记录显示
+            conversations = [];
+            renderHistoryList();
             alert("已退出登录");
         }
 
         function createNewChat(){
+
+            // 保存上一个会话
+            saveCurrentConversation();
 
             currentConversation = [];
 
@@ -1003,30 +1016,18 @@
         }
 
         function renderHistoryList(){
-
-            const list =
-                document.getElementById("history-list");
-
+            const list = document.getElementById("history-list");
             list.innerHTML = "";
 
+            if(!token) return; // 游客不显示
+
             conversations.forEach((item,index)=>{
-
-                const div =
-                    document.createElement("div");
-
-                div.className =
-                    "history-record";
-
-                div.innerText =
-                    item.title;
-
-                div.onclick =
-                    ()=>openConversation(index);
-
+                const div = document.createElement("div");
+                div.className = "history-record";
+                div.innerText = item.title;
+                div.onclick = ()=>openConversation(index);
                 list.appendChild(div);
-
             });
-
         }
 
         function saveConversation(firstQuestion){
@@ -1125,6 +1126,24 @@
                 .getElementById("sidebar")
                 .classList
                 .remove("open");
+        }
+
+        // 保存当前会话为一次历史记录
+        function saveCurrentConversation(){
+            if(!token) return;
+            if(currentConversation.length === 0) return;
+
+            const firstUserMsg = currentConversation.find(m => m.role === "user");
+            if(!firstUserMsg) return;
+
+            const newRecord = {
+                title: firstUserMsg.content,
+                messages: JSON.parse(JSON.stringify(currentConversation))
+            };
+
+            conversations.unshift(newRecord);
+            localStorage.setItem("conversations", JSON.stringify(conversations));
+            renderHistoryList();
         }
 
         document.getElementById("logout-btn").addEventListener("click", logout);
