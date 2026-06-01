@@ -6,17 +6,15 @@
     <title>华南理工校园百事通</title>
     <style>
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Microsoft YaHei", sans-serif;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: system-ui, -apple-system, sans-serif;
         }
 
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #f5f7fa;
+        body {
+        padding: 20px;
+        background: #f5f7fa;
         }
 
         .chat-container {
@@ -255,6 +253,90 @@
             cursor: pointer;
             margin-left: 8px;
         }
+
+        /* 折叠容器 */
+        .record-wrapper {
+        width: 320px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        overflow: hidden;
+        }
+
+        /* 折叠按钮 */
+        .toggle-btn {
+        width: 100%;
+        padding: 14px 16px;
+        border: none;
+        background: #fff;
+        text-align: left;
+        font-size: 16px;
+        font-weight: 500;
+        color: #333;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid #eee;
+        }
+        .toggle-btn::after {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-right: 2px solid #999;
+        border-bottom: 2px solid #999;
+        transform: rotate(45deg);
+        transition: transform 0.3s ease;
+        }
+        details[open] .toggle-btn::after {
+        transform: rotate(225deg);
+        }
+
+        /* 折叠内容区 */
+        .collapse-body {
+        padding: 0;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s ease, padding 0.4s ease;
+        }
+        details[open] .collapse-body {
+        max-height: 600px;
+        padding: 12px 16px;
+        }
+
+        /* 新对话按钮 */
+        .new-chat-btn {
+        display: block;
+        width: 100%;
+        padding: 12px 14px;
+        margin-bottom: 10px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        background: #fafbfc;
+        font-size: 15px;
+        color: #333;
+        cursor: pointer;
+        text-align: left;
+        }
+        .new-chat-btn:hover {
+        background: #f0f2f5;
+        }
+
+        /* 历史记录列表 */
+        .history-list {
+        list-style: none;
+        margin-top: 8px;
+        }
+        .history-item {
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 15px;
+        color: #555;
+        cursor: pointer;
+        }
+        .history-item:hover {
+        background: #f0f2f5;
+        }
     </style>
 </head>
 <body>
@@ -264,7 +346,6 @@
             <div class="user-info">
                 <span id="health-status" class="health-status">检查服务中...</span>
                 <button id="login-btn" class="history-btn">登录/注册</button>
-                <button id="history-btn" class="history-btn hidden">查看记录</button>
                 <button id="logout-btn" class="history-btn hidden">退出登录</button>
             </div>
         </div>
@@ -333,17 +414,6 @@
                 <button class="modal-btn cancel-btn" onclick="hideRegisterModal()">取消</button>
                 <button class="modal-btn primary-btn" onclick="doRegister()">注册</button>
                 <button class="modal-btn primary-btn" onclick="switchToLogin()">登录</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 聊天记录弹窗 -->
-    <div id="history-modal" class="modal hidden">
-        <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
-            <div class="modal-title">我的聊天记录</div>
-            <div id="history-list"></div>
-            <div class="modal-btns" style="justify-content: center; margin-top: 20px;">
-                <button class="modal-btn cancel-btn" onclick="hideHistoryModal()">关闭</button>
             </div>
         </div>
     </div>
@@ -746,60 +816,19 @@
             alert("已退出登录");
         }
 
-        // 查看聊天记录（修复解析逻辑）
-        async function showHistory() {
-            if (!token) {
-                alert("请先登录后查看聊天记录");
-                showLoginModal();
-                return;
-            }
-
-            const historyList = document.getElementById("history-list");
-            historyList.innerHTML = '<div class="loading">加载中...</div>';
-            document.getElementById("history-modal").classList.remove("hidden");
-
-            try {
-                const res = await fetch(`${BASE_URL}/user/history?token=${token}`);
-                if (!res.ok) {
-                    throw new Error(`获取记录失败：${res.status}`);
-                }
-
-                const result = await res.json();
-
-                if (result.code === 200) {
-                    const records = result.data || [];
-                    if (records.length > 0) {
-                        let html = "";
-                        records.forEach((item, index) => {
-                            try {
-                                // 解析API返回的JSON字符串（核心修复点）
-                                const data = typeof item === "string" ? JSON.parse(item) : item;
-                                const time = new Date(data.time).toLocaleString("zh-CN");
-                                html += `
-                                <div style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #eee;">
-                                    <div style="font-size: 12px; color: #999; margin-bottom: 8px;">${time}（第${index+1}条）</div>
-                                    <div style="margin-bottom: 4px;"><strong>问题：</strong>${data.question || "无"}</div>
-                                    <div><strong>回答：</strong>${data.answer || "无"}</div>
-                                </div>`;
-                            } catch (err) {
-                                html += `<div style="color: #f56c6c; margin-bottom: 16px;">第${index+1}条记录解析失败：${err.message}</div>`;
-                            }
-                        });
-                        historyList.innerHTML = html;
-                    } else {
-                        historyList.innerHTML = '<div style="text-align: center; color: #999; padding: 20px 0;">暂无聊天记录</div>';
-                    }
-                } else {
-                    historyList.innerHTML = `<div style="color: #f56c6c; text-align: center; padding: 20px 0;">${result.msg || "获取记录失败"}</div>`;
-                }
-            } catch (err) {
-                console.error("获取聊天记录失败：", err);
-                historyList.innerHTML = `<div style="color: #f56c6c; text-align: center; padding: 20px 0;">加载失败：${err.message}</div>`;
-            }
-        }
-
-        function hideHistoryModal() {
-            document.getElementById("history-modal").classList.add("hidden");
+        function createNewChat() {
+            // 清空聊天框
+            document.getElementById("chat-messages").innerHTML = `
+                <div class="ai-message message">
+                    <div class="bubble"> 
+                        你好！我是华南理工校园百事通，有任何校园问题都可以问我～
+                    </div>
+                </div>
+            `;
+            // 隐藏历史记录弹窗
+            hideHistoryModal();
+            // 聚焦输入框
+            document.getElementById("question-input").focus();
         }
 
         // 绑定按钮事件（修复登录按钮逻辑）
@@ -813,7 +842,6 @@
         });
 
         document.getElementById("logout-btn").addEventListener("click", logout);
-        document.getElementById("history-btn").addEventListener("click", showHistory);
     </script>
 </body>
 </html>
