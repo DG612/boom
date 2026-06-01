@@ -30,14 +30,30 @@
         }
 
         .chat-header {
+            height:72px;
             padding: 16px 20px;
             background: #409eff;
             color: white;
             font-size: 18px;
             font-weight: bold;
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
+            position: relative;
+        }
+
+        .chat-header > span {
+            position:absolute;
+            left:50%;
+            transform:translateX(-50%);
+        }
+
+        .user-info {
+            position:absolute;
+            right:20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .health-status {
@@ -45,12 +61,6 @@
             padding: 4px 10px;
             border-radius: 12px;
             background: rgba(255, 255, 255, 0.2);
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
 
         .chat-messages {
@@ -102,6 +112,25 @@
             align-items: flex-end;
             gap: 10px;
             background: #fff;
+        }
+
+        /* 初始状态：输入框居中 */
+        .chat-container.start-mode .input-area{
+            position:absolute;
+            left:50%;
+            top:50%;
+            transform:translate(-50%,-50%);
+            width:70%;
+            max-width:800px;
+            border-top:none;
+            border:1px solid #eee;
+            border-radius:24px;
+            box-shadow:0 4px 18px rgba(0,0,0,0.08);
+        }
+
+        /* 初始状态隐藏消息区 */
+        .chat-container.start-mode .chat-messages{
+            display:none;
         }
 
         #question-input {
@@ -327,6 +356,7 @@
         list-style: none;
         margin-top: 8px;
         }
+
         .history-item {
         padding: 10px 14px;
         border-radius: 8px;
@@ -334,13 +364,109 @@
         color: #555;
         cursor: pointer;
         }
+
         .history-item:hover {
         background: #f0f2f5;
+        }
+
+        /* 左上角菜单按钮 */
+        .sidebar-toggle{
+            position:fixed;
+            left:0;
+            top:0;
+            width:64px;
+            height:72px;
+            border:none;
+            background:#409eff;
+            color:#fff;
+            font-size:24px;
+            cursor:pointer;
+            z-index:300;
+        }
+
+        /* 左侧折叠栏：默认隐藏 */
+        .sidebar{
+            position:fixed;
+            left:-260px;
+            top:72px;
+            width:260px;
+            height:calc(100vh - 72px);
+            background:#fff;
+            border-right:1px solid #eee;
+            transition:left 0.3s ease;
+            z-index:200;
+            padding:12px;
+        }
+
+        /* 展开时显示 */
+        .sidebar.open{
+            left:0;
+        }
+
+        .sidebar-content{
+            padding:0;
+        }
+
+        .new-chat-card{
+            padding:14px;
+            border:1px solid #ddd;
+            border-radius:8px;
+            cursor:pointer;
+            margin-bottom:10px;
+            background:#fafafa;
+        }
+
+        .new-chat-card:hover{
+            background:#f5f5f5;
+        }
+
+        .history-records{
+            display:flex;
+            flex-direction:column;
+            gap:8px;
+        }
+
+        .history-record{
+            padding:12px;
+            border:1px solid #eee;
+            border-radius:8px;
+            cursor:pointer;
+            overflow:hidden;
+            white-space:nowrap;
+            text-overflow:ellipsis;
+        }
+
+        .history-record:hover{
+            background:#f5f7fa;
+        }
+
+        /* 主页面不再因为侧边栏改变宽度 */
+        .chat-container{
+            left:0;
+            width:100vw;
         }
     </style>
 </head>
 <body>
-    <div class="chat-container">
+    <button class="sidebar-toggle"
+            onclick="toggleSidebar()">
+        ☰
+    </button>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-content">
+            <div class="new-chat-card"
+                onclick="createNewChat()">
+                + 新对话
+            </div>
+            <div id="history-list"
+                class="history-records">
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-container start-mode" id="chat-container">
+
         <div class="chat-header">
             <span>华南理工校园百事通</span>
             <div class="user-info">
@@ -350,17 +476,11 @@
             </div>
         </div>
 
-        <div id="chat-messages" class="chat-messages">
-            <div class="ai-message message">
-                <div class="bubble"> 
-                    你好！我是华南理工校园百事通，有任何校园问题都可以问我～
-                </div>
-            </div>
-        </div>
+        <div id="chat-messages" class="chat-messages empty"></div>
 
         <div class="input-area">
             <textarea id="question-input"
-                placeholder="请输入你的问题"
+                placeholder="你好！我是华南理工校园百事通，有任何校园问题都可以问我～"
                 onkeydown="if(event.keyCode===13&&!event.shiftKey){event.preventDefault();sendQuestion();}"></textarea>
             <label class="deep-option">
                 <input type="checkbox" id="deep-search-checkbox"> 深度搜索
@@ -424,6 +544,11 @@
         let token = localStorage.getItem("token") || "";
         let username = localStorage.getItem("username") || "";
         let isAdmin = localStorage.getItem("isAdmin") === "true" || false;
+        let conversations = JSON.parse(
+            localStorage.getItem("conversations") || "[]"
+        );
+
+        let currentConversation = [];
 
         window.onload = function () {
             checkBackendHealth();
@@ -440,6 +565,8 @@
             // 初始化用户状态
             initUserStatus();
 
+            renderHistoryList();
+
             // 检查登录状态（验证token有效性）
             if (token) {
                 checkTokenValid();
@@ -449,13 +576,11 @@
         // 初始化用户状态UI
         function initUserStatus() {
             const loginBtn = document.getElementById("login-btn");
-            const historyBtn = document.getElementById("history-btn");
             const logoutBtn = document.getElementById("logout-btn");
             const adminOption = document.getElementById("admin-mode-checkbox-wrap");
 
             if (token) {
                 loginBtn.textContent = username;
-                historyBtn.classList.remove("hidden");
                 logoutBtn.classList.remove("hidden");
                 if (isAdmin) {
                     adminOption.style.display = "flex";
@@ -464,7 +589,6 @@
                 }
             } else {
                 loginBtn.textContent = "登录/注册";
-                historyBtn.classList.add("hidden");
                 logoutBtn.classList.add("hidden");
                 adminOption.style.display = "none";
             }
@@ -542,7 +666,23 @@
             const chat = document.getElementById("chat-messages");
 
             const q = input.value.trim();
-            if (!q || isRequesting) return;
+                if (!q || isRequesting) return;
+
+                /* 用户发出第一个问题后，切换为正常聊天布局 */
+                document
+                    .getElementById("chat-container")
+                    .classList
+                    .remove("start-mode");
+
+                /* 第一次提问后，把输入框提示恢复为原来的内容 */
+                input.placeholder = "请输入你的问题";
+
+                if(currentConversation.length === 0){
+                    currentConversation.push({
+                        role:"user",
+                        content:q
+                    });
+                }
 
             isRequesting = true;
             btn.disabled = true;
@@ -610,6 +750,13 @@
                 <div class="ai-message message">
                     <div class="bubble">${answer}</div>
                 </div>`;
+
+                currentConversation.push({
+                    role:"assistant",
+                    content:answer
+                });
+
+                saveConversation(q);
 
             } catch (err) {
                 // 异常处理
@@ -816,19 +963,26 @@
             alert("已退出登录");
         }
 
-        function createNewChat() {
-            // 清空聊天框
-            document.getElementById("chat-messages").innerHTML = `
-                <div class="ai-message message">
-                    <div class="bubble"> 
-                        你好！我是华南理工校园百事通，有任何校园问题都可以问我～
-                    </div>
-                </div>
-            `;
-            // 隐藏历史记录弹窗
-            hideHistoryModal();
-            // 聚焦输入框
-            document.getElementById("question-input").focus();
+        function createNewChat(){
+
+            currentConversation = [];
+
+            document
+                .getElementById("chat-container")
+                .classList
+                .add("start-mode");
+
+            document.getElementById("chat-messages").innerHTML = "";
+
+            const input = document.getElementById("question-input");
+            input.value = "";
+            input.placeholder = "你好！我是华南理工校园百事通，有任何校园问题都可以问我～";
+            input.focus();
+
+            document
+                .getElementById("sidebar")
+                .classList
+                .remove("open");
         }
 
         // 绑定按钮事件（修复登录按钮逻辑）
@@ -840,6 +994,138 @@
                 alert(`当前登录账号：${username}`);
             }
         });
+
+        function toggleSidebar(){
+            document
+                .getElementById("sidebar")
+                .classList
+                .toggle("open");
+        }
+
+        function renderHistoryList(){
+
+            const list =
+                document.getElementById("history-list");
+
+            list.innerHTML = "";
+
+            conversations.forEach((item,index)=>{
+
+                const div =
+                    document.createElement("div");
+
+                div.className =
+                    "history-record";
+
+                div.innerText =
+                    item.title;
+
+                div.onclick =
+                    ()=>openConversation(index);
+
+                list.appendChild(div);
+
+            });
+
+        }
+
+        function saveConversation(firstQuestion){
+
+            if(!token){
+                return;
+            }
+
+            const exists =
+                conversations.some(
+                    x => x.messages === currentConversation
+                );
+
+            if(exists){
+                return;
+            }
+
+            conversations.unshift({
+
+                title:firstQuestion,
+
+                messages:
+                    JSON.parse(
+                        JSON.stringify(
+                            currentConversation
+                        )
+                    )
+
+            });
+
+            localStorage.setItem(
+                "conversations",
+                JSON.stringify(conversations)
+            );
+
+            renderHistoryList();
+        }
+
+        function openConversation(index){
+
+            if(!token){
+
+                alert("请先登录");
+
+                return;
+            }
+
+            const data =
+                conversations[index];
+
+            const chat =
+                document.getElementById(
+                    "chat-messages"
+                );
+
+            chat.innerHTML = "";
+
+            data.messages.forEach(msg=>{
+
+                if(msg.role==="user"){
+
+                    chat.innerHTML += `
+                    <div class="user-message message">
+                        <div class="bubble">
+                            ${msg.content}
+                        </div>
+                    </div>`;
+                }
+                else{
+
+                    chat.innerHTML += `
+                    <div class="ai-message message">
+                        <div class="bubble">
+                            ${msg.content}
+                        </div>
+                    </div>`;
+                }
+
+            });
+
+            currentConversation =
+                JSON.parse(
+                    JSON.stringify(
+                        data.messages
+                    )
+                );
+            
+            document
+                .getElementById("chat-container")
+                .classList
+                .remove("start-mode");
+
+            document.getElementById("question-input").placeholder = "请输入你的问题";
+
+            document
+                .getElementById("sidebar")
+                .classList
+                .remove("open");
+        }
 
         document.getElementById("logout-btn").addEventListener("click", logout);
     </script>
