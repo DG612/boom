@@ -65,7 +65,9 @@
 
         .chat-messages {
             flex: 1;
-            padding: 20px;
+            width: min(62%, 860px);
+            margin: 0 auto;
+            padding: 20px 0 110px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
@@ -106,26 +108,44 @@
         }
 
         .input-area {
+            position: absolute;
+            left: 50%;
+            bottom: 16px;
+            transform: translateX(-50%);
+            width: min(62%, 860px);
             padding: 15px;
-            border-top: 1px solid #eee;
+            border: 1px solid #eee;
+            border-radius: 24px;
             display: flex;
             align-items: flex-end;
             gap: 10px;
             background: #fff;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.08);
         }
 
         /* 初始状态：输入框居中 */
         .chat-container.start-mode .input-area{
-            position:absolute;
-            left:50%;
             top:50%;
+            bottom:auto;
             transform:translate(-50%,-50%);
-            width:70%;
-            max-width:800px;
-            border-top:none;
-            border:1px solid #eee;
-            border-radius:24px;
-            box-shadow:0 4px 18px rgba(0,0,0,0.08);
+            width:min(62%, 860px);
+        }
+
+        .chat-container.chat-active .input-area {
+            animation: inputDropDown 0.35s ease forwards;
+        }
+
+        @keyframes inputDropDown {
+            from {
+                top: 50%;
+                bottom: auto;
+                transform: translate(-50%, -50%);
+            }
+            to {
+                top: auto;
+                bottom: 16px;
+                transform: translateX(-50%);
+            }
         }
 
         /* 初始状态隐藏消息区 */
@@ -732,10 +752,12 @@
                 if (!q || isRequesting) return;
 
                 /* 用户发出第一个问题后，切换为正常聊天布局 */
-                document
-                    .getElementById("chat-container")
-                    .classList
-                    .remove("start-mode");
+                const chatContainer = document.getElementById("chat-container");
+
+                if (chatContainer.classList.contains("start-mode")) {
+                    chatContainer.classList.remove("start-mode");
+                    chatContainer.classList.add("chat-active");
+                }
 
                 /* 第一次提问后，把输入框提示恢复为原来的内容 */
                 input.placeholder = "请输入你的问题";
@@ -1062,6 +1084,11 @@
             document
                 .getElementById("chat-container")
                 .classList
+                .remove("chat-active");
+
+            document
+                .getElementById("chat-container")
+                .classList
                 .add("start-mode");
 
             document.getElementById("chat-messages").innerHTML = "";
@@ -1145,11 +1172,8 @@
         }
 
         function openConversation(index){
-
             if(!token){
-
                 alert("请先登录");
-
                 return;
             }
 
@@ -1164,17 +1188,14 @@
             chat.innerHTML = "";
 
             data.messages.forEach(msg=>{
-
                 if(msg.role==="user"){
-
                     chat.innerHTML += `
                     <div class="user-message message">
                         <div class="bubble">
                             ${msg.content}
                         </div>
                     </div>`;
-                }
-                else{
+                }else{
 
                     chat.innerHTML += `
                     <div class="ai-message message">
@@ -1183,7 +1204,6 @@
                         </div>
                     </div>`;
                 }
-
             });
 
             currentConversation =
@@ -1199,6 +1219,11 @@
                 .getElementById("chat-container")
                 .classList
                 .remove("start-mode");
+
+            document
+                .getElementById("chat-container")
+                .classList
+                .add("chat-active");
 
             document.getElementById("question-input").placeholder = "请输入你的问题";
 
