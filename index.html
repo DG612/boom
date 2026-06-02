@@ -569,6 +569,27 @@
             color: #e0e0e0;
         }
 
+        .ai-message .bubble.no-bg .markdown {
+            font-size: 15px;           /* 正文字体略大 */
+            line-height: 1.6;          /* 行距增大 */
+            margin-bottom: 4px;
+        }
+
+        .ai-message .bubble.no-bg .markdown h3 {
+            font-size: 17px;           /* 标题略大 */
+            font-weight: bold;
+            margin: 12px 0 6px 0;
+        }
+
+        .ai-message .bubble.no-bg .markdown ul {
+            padding-left: 20px;        /* 列表缩进 */
+            margin: 8px 0;
+        }
+
+        .ai-message .bubble.no-bg .markdown li {
+            margin: 4px 0;
+        }
+
         /* 百事通后缀显示在右下角，灰色小字 */
         .bubble-suffix {
             font-size: 12px;
@@ -905,7 +926,7 @@
                 chat.innerHTML += `
                     <div class="ai-message message">
                         <div class="bubble no-bg">
-                            <div>${renderMarkdownToHtml(ans.text)}</div>
+                            ${renderMarkdownToHtml(ans.text)}
                             ${ans.suffix ? `<div class="bubble-suffix">${escapeHtml(ans.suffix)}</div>` : ""}
                         </div>
                     </div>`;
@@ -1501,7 +1522,7 @@
                         chat.innerHTML += `
                         <div class="ai-message message">
                             <div class="bubble no-bg">
-                                <div>${renderMarkdownToHtml(ans.text)}</div>
+                                ${renderMarkdownToHtml(ans.text)}
                                 ${ans.suffix ? `<div class="bubble-suffix">${escapeHtml(ans.suffix)}</div>` : ""}
                             </div>
                         </div>`;
@@ -1633,7 +1654,7 @@
             // 一级标题 #
             html = html.replace(/^#\s+(.+)$/gm, '<h3>$1</h3>');
 
-            return html;
+            return `<div class="markdown">${html}</div>`;
         }
     </script>
 </body>
