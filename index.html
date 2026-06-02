@@ -13,14 +13,16 @@
         }
 
         body {
-        padding: 20px;
-        background: #f5f7fa;
+            padding: 20px;
+            background: #121212;
+            color: #e0e0e0;
         }
 
         .chat-container {
             width: 100vw;
             height: 100vh;
-            background: white;
+            background: #1e1e1e;
+            color: #e0e0e0;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -32,8 +34,8 @@
         .chat-header {
             height:72px;
             padding: 16px 20px;
-            background: #409eff;
-            color: white;
+            background: #000;
+            color: #fff;
             font-size: 18px;
             font-weight: bold;
             display: flex;
@@ -97,13 +99,13 @@
 
         .ai-message .bubble {
             background: #f1f3f4;
-            color: #333;
+            color: #e0e0e0;
             border-bottom-left-radius: 6px;
         }
 
         .user-message .bubble {
-            background: #409eff;
-            color: white;
+            background: #3a3a3a;
+            color: #fff;
             border-bottom-right-radius: 6px;
         }
 
@@ -114,12 +116,12 @@
             transform: translateX(-50%);
             width: min(62%, 860px);
             padding: 15px;
-            border: 1px solid #eee;
+            border: 1px solid #555;
             border-radius: 24px;
             display: flex;
             align-items: flex-end;
             gap: 10px;
-            background: #fff;
+            background: #2a2a2a;
             box-shadow: 0 4px 18px rgba(0,0,0,0.08);
         }
 
@@ -156,7 +158,9 @@
         #question-input {
             flex: 1;
             padding: 12px 15px;
-            border: 1px solid #ddd;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            border: 1px solid #555;
             border-radius: 20px;
             resize: none;
             min-height: 48px;
@@ -167,7 +171,7 @@
         }
 
         #question-input:focus {
-            border-color: #409eff;
+            border-color: #7f39fb;
         }
 
         .deep-option, .admin-option {
@@ -185,8 +189,8 @@
 
         #send-btn {
             padding: 12px 20px;
-            background: #409eff;
-            color: white;
+            background: #6200ee;
+            color: #fff;
             border: none;
             border-radius: 20px;
             cursor: pointer;
@@ -195,7 +199,7 @@
         }
 
         #send-btn:hover {
-            background: #338eef;
+            background: #7f39fb;
         }
 
         #send-btn:disabled {
@@ -224,7 +228,8 @@
         }
 
         .modal-content {
-            background: white;
+            background: #1f1f1f;
+            color: #e0e0e0;
             padding: 24px;
             border-radius: 12px;
             width: 90%;
@@ -327,92 +332,6 @@
             margin-left: 8px;
         }
 
-        /* 折叠容器 */
-        .record-wrapper {
-        width: 320px;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-        overflow: hidden;
-        }
-
-        /* 折叠按钮 */
-        .toggle-btn {
-        width: 100%;
-        padding: 14px 16px;
-        border: none;
-        background: #fff;
-        text-align: left;
-        font-size: 16px;
-        font-weight: 500;
-        color: #333;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        border-bottom: 1px solid #eee;
-        }
-        .toggle-btn::after {
-        content: "";
-        width: 8px;
-        height: 8px;
-        border-right: 2px solid #999;
-        border-bottom: 2px solid #999;
-        transform: rotate(45deg);
-        transition: transform 0.3s ease;
-        }
-        details[open] .toggle-btn::after {
-        transform: rotate(225deg);
-        }
-
-        /* 折叠内容区 */
-        .collapse-body {
-        padding: 0;
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 0.4s ease, padding 0.4s ease;
-        }
-        details[open] .collapse-body {
-        max-height: 600px;
-        padding: 12px 16px;
-        }
-
-        /* 新对话按钮 */
-        .new-chat-btn {
-        display: block;
-        width: 100%;
-        padding: 12px 14px;
-        margin-bottom: 10px;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        background: #fafbfc;
-        font-size: 15px;
-        color: #333;
-        cursor: pointer;
-        text-align: left;
-        }
-        .new-chat-btn:hover {
-        background: #f0f2f5;
-        }
-
-        /* 历史记录列表 */
-        .history-list {
-        list-style: none;
-        margin-top: 8px;
-        }
-
-        .history-item {
-        padding: 10px 14px;
-        border-radius: 8px;
-        font-size: 15px;
-        color: #555;
-        cursor: pointer;
-        }
-
-        .history-item:hover {
-        background: #f0f2f5;
-        }
-
         /* 左上角菜单按钮 */
         .sidebar-toggle{
             position:fixed;
@@ -421,8 +340,8 @@
             width:64px;
             height:72px;
             border:none;
-            background:#409eff;
-            color:#fff;
+            background: #6200ee;
+            color: #fff;
             font-size:24px;
             cursor:pointer;
             z-index:300;
@@ -435,7 +354,8 @@
             top:72px;
             width:260px;
             height:calc(100vh - 72px);
-            background:#fff;
+            background: #1f1f1f;
+            color: #e0e0e0;
             border-right:1px solid #eee;
             transition:left 0.3s ease;
             z-index:200;
@@ -453,15 +373,16 @@
 
         .new-chat-card{
             padding:14px;
-            border:1px solid #ddd;
+            border: 1px solid #444;
             border-radius:8px;
             cursor:pointer;
             margin-bottom:10px;
-            background:#fafafa;
+            background: #2a2a2a;
+            color: #e0e0e0;
         }
 
         .new-chat-card:hover{
-            background:#f5f5f5;
+            background: #3b3b3b;
         }
 
         .history-records{
@@ -472,7 +393,9 @@
 
         .history-record{
             padding:12px;
-            border:1px solid #eee;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: #e0e0e0;
             border-radius:8px;
             cursor:pointer;
             overflow:hidden;
@@ -481,13 +404,29 @@
         }
 
         .history-record:hover{
-            background:#f5f7fa;
+            background: #3b3b3b;
         }
 
         /* 主页面不再因为侧边栏改变宽度 */
         .chat-container{
             left:0;
             width:100vw;
+        }
+
+        /* 隐藏AI回答气泡背景 */
+        .ai-message .bubble.no-bg {
+            background: none;
+            border-radius: 0;
+            padding: 0;
+            color: #e0e0e0;
+        }
+
+        /* 百事通后缀显示在右下角，灰色小字 */
+        .bubble-suffix {
+            font-size: 12px;
+            color: #999;
+            text-align: right;
+            margin-top: 4px;
         }
     </style>
 </head>
@@ -653,6 +592,11 @@
             if (token) {
                 checkTokenValid();
             }
+
+            // 关闭或刷新网页前保存当前会话
+            window.addEventListener("beforeunload", function () {
+                saveCurrentConversationToHistory();
+            });
         };
 
         // 初始化用户状态UI
@@ -826,21 +770,22 @@
                 } else {
                     answer = result.msg || "请求失败，请重试";
                 }
-                // 清理回答中的冗余文本
-                answer = answer.replace(/（根据知识库信息）/g, "").trim();
                 
                 // 添加AI回答到聊天框
+                const ans = formatAnswerWithSuffix(answer);
+
                 chat.innerHTML += `
-                <div class="ai-message message">
-                    <div class="bubble">${answer}</div>
-                </div>`;
+                    <div class="ai-message message">
+                        <div class="bubble no-bg">
+                            <div>${ans.text}</div>
+                            ${ans.suffix ? `<div class="bubble-suffix">${ans.suffix}</div>` : ""}
+                        </div>
+                    </div>`;
 
                 currentConversation.push({
                     role:"assistant",
                     content:answer
                 });
-
-                saveCurrentConversationToHistory();
 
             } catch (err) {
                 // 异常处理
@@ -1067,6 +1012,7 @@
             currentConversationId = createConversationId();
             initUserStatus();
             renderHistoryList();
+            createNewChat();
             alert("已退出登录");
         }
 
@@ -1097,11 +1043,6 @@
             input.value = "";
             input.placeholder = "你好！我是华南理工校园百事通，有任何校园问题都可以问我～";
             input.focus();
-
-            document
-                .getElementById("sidebar")
-                .classList
-                .remove("open");
         }
 
         // 绑定按钮事件（修复登录按钮逻辑）
@@ -1226,14 +1167,36 @@
                 .add("chat-active");
 
             document.getElementById("question-input").placeholder = "请输入你的问题";
-
-            document
-                .getElementById("sidebar")
-                .classList
-                .remove("open");
         }
 
         document.getElementById("logout-btn").addEventListener("click", logout);
+
+        function formatAnswerWithSuffix(answerText) {
+            // 后缀列表
+            const suffixes = [
+                "（知识库信息）",
+                "【提示：数据库中没有相关内容，此内容为 AI 自动生成。】",
+                "(来自当前对话上传文件)",
+                "(来自你的全局知识库)"
+            ];
+
+            let mainText = answerText;
+            let detectedSuffix = "";
+
+            // 检查是否包含已知后缀
+            for (const s of suffixes) {
+                if (mainText.endsWith(s)) {
+                    mainText = mainText.slice(0, -s.length).trim();
+                    detectedSuffix = s;
+                    break;
+                }
+            }
+
+            return {
+                text: mainText,
+                suffix: detectedSuffix
+            };
+        }
     </script>
 </body>
 </html>
