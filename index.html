@@ -34,7 +34,7 @@
         .chat-header {
             height:72px;
             padding: 16px 20px;
-            background: #000;
+            background: #121212;
             color: #fff;
             font-size: 18px;
             font-weight: bold;
@@ -115,14 +115,15 @@
             bottom: 16px;
             transform: translateX(-50%);
             width: min(58%, 780px);
-            padding: 15px;
-            border: 1px solid #555;
-            border-radius: 24px;
+            padding: 0;
+            border: none;
+            border-radius: 0;
             display: flex;
-            align-items: flex-end;
-            gap: 10px;
-            background: #2a2a2a;
-            box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+            flex-direction: column;
+            align-items: stretch;
+            gap: 6px;
+            background: transparent;
+            box-shadow: none;
         }
 
         /* 初始状态：输入框居中 */
@@ -155,44 +156,75 @@
             display:none;
         }
 
+        .input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
         #question-input {
-            flex: 1;
-            padding: 12px 15px;
-            background: #1e1e1e;
+            width: 100%;
+            padding: 12px 92px 12px 15px;
+            background: #2a2a2a;
             color: #e0e0e0;
             border: 1px solid #555;
-            border-radius: 20px;
+            border-radius: 24px;
             resize: none;
             min-height: 48px;
             max-height: 120px;
             outline: none;
             font-size: 14px;
+            line-height: 22px;
             transition: border 0.2s;
+            display: block;
         }
 
         #question-input:focus {
             border-color: #7f39fb;
         }
 
-        .deep-option, .admin-option {
-            white-space: nowrap;
-            font-size: 14px;
-            color: #666;
+        .option-buttons {
             display: flex;
-            align-items: center;
-            gap: 4px;
+            gap: 8px;
+            justify-content: flex-start;
         }
 
-        .admin-option {
+        .option-btn {
+            padding: 7px 12px;
+            border-radius: 24px;
+            border: 1px solid #555;
+            background: #2a2a2a;
+            color: #e0e0e0;
+            cursor: pointer;
+            font-size: 13px;
+            line-height: 1;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .option-btn.active {
+            background: #6200ee;
+            border-color: #6200ee;
+            color: #fff;
+        }
+
+        .option-btn:hover {
+            border-color: #7f39fb;
+        }
+
+        .admin-hidden {
             display: none;
         }
 
         #send-btn {
-            padding: 12px 20px;
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 34px;
+            padding: 0 18px;
             background: #6200ee;
             color: #fff;
             border: none;
-            border-radius: 20px;
+            border-radius: 18px;
             cursor: pointer;
             font-size: 14px;
             transition: background 0.2s;
@@ -372,7 +404,7 @@
             height:calc(100vh - 72px);
             background: #1f1f1f;
             color: #e0e0e0;
-            border-right:1px solid #eee;
+            border-right:1px solid #444;
             transition:left 0.3s ease;
             z-index:200;
             padding:12px;
@@ -483,16 +515,18 @@
         <div id="chat-messages" class="chat-messages empty"></div>
 
         <div class="input-area">
-            <textarea id="question-input"
-                placeholder="你好！我是华南理工校园百事通，有任何校园问题都可以问我～"
-                onkeydown="if(event.keyCode===13&&!event.shiftKey){event.preventDefault();sendQuestion();}"></textarea>
-            <label class="deep-option">
-                <input type="checkbox" id="deep-search-checkbox"> 深度搜索
-            </label>
-            <label class="admin-option" id="admin-mode-checkbox-wrap">
-                <input type="checkbox" id="admin-mode-checkbox"> 管理员模式
-            </label>
-            <button id="send-btn" onclick="sendQuestion()">发送</button>
+            <div class="option-buttons">
+                <button type="button" id="deep-btn" class="option-btn" onclick="toggleDeepSearch()">深度思考</button>
+                <button type="button" id="admin-btn" class="option-btn admin-hidden" onclick="toggleAdminMode()">管理员模式</button>
+            </div>
+
+            <div class="input-wrapper">
+                <textarea id="question-input"
+                    placeholder="你好！我是华南理工校园百事通，有任何校园问题都可以问我～"
+                    onkeydown="if(event.keyCode===13&&!event.shiftKey){event.preventDefault();sendQuestion();}"></textarea>
+
+                <button id="send-btn" onclick="sendQuestion()">发送</button>
+            </div>
         </div>
     </div>
 
@@ -557,35 +591,10 @@
         let isRequesting = false;
         let token = localStorage.getItem("token") || "";
         let username = localStorage.getItem("username") || "";
-        let isAdmin = localStorage.getItem("isAdmin") === "true" || false;
+        let isAdmin = localStorage.getItem("isAdmin") === "true" || localStorage.getItem("admin") === "true" || false;
         let conversations = [];
         let currentConversation = [];
-        let currentConversationId = createConversationId();
-        let currentConversationSaved = false;
-
-        function getHistoryKey() {
-            return username ? `chat_history_${username}` : "";
-        }
-
-        function loadLocalHistory() {
-            if (!token || !username) {
-                conversations = [];
-                return;
-            }
-
-            conversations = JSON.parse(
-                localStorage.getItem(getHistoryKey()) || "[]"
-            );
-        }
-
-        function saveLocalHistory() {
-            if (!token || !username) return;
-
-            localStorage.setItem(
-                getHistoryKey(),
-                JSON.stringify(conversations)
-            );
-        }
+        let currentConversationId = "";
 
         function createConversationId() {
             return "chat_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
@@ -595,80 +604,73 @@
             checkBackendHealth();
             setInterval(checkBackendHealth, 30000);
 
-            // 初始化深度搜索复选框
-            const deepCb = document.getElementById("deep-search-checkbox");
+            const deepBtn = document.getElementById("deep-btn");
             const saved = localStorage.getItem("deepSearchEnabled");
-            deepCb.checked = saved === "true";
-            deepCb.addEventListener("change", () => {
-                localStorage.setItem("deepSearchEnabled", deepCb.checked);
-            });
+            if (saved === "true") {
+                deepBtn.classList.add("active");
+            } else {
+                deepBtn.classList.remove("active");
+            }
 
-            // 初始化用户状态
             initUserStatus();
-
             renderHistoryList();
 
-            // 检查登录状态（验证token有效性）
             if (token) {
                 checkTokenValid();
             }
-
-            // 关闭或刷新网页前保存当前会话
-            window.addEventListener("beforeunload", function () {
-                saveCurrentConversationToHistory();
-            });
         };
 
-        // 初始化用户状态UI
         function initUserStatus() {
             const loginBtn = document.getElementById("login-btn");
             const logoutBtn = document.getElementById("logout-btn");
-            const adminOption = document.getElementById("admin-mode-checkbox-wrap");
+            const adminBtn = document.getElementById("admin-btn");
 
             if (token) {
-                loginBtn.textContent = username;
+                loginBtn.textContent = username || "已登录";
                 logoutBtn.classList.remove("hidden");
-                if (isAdmin) {
-                    adminOption.style.display = "flex";
-                } else {
-                    adminOption.style.display = "none";
-                }
+                adminBtn.classList.toggle("admin-hidden", !isAdmin);
             } else {
                 loginBtn.textContent = "登录/注册";
                 logoutBtn.classList.add("hidden");
-                adminOption.style.display = "none";
+                adminBtn.classList.add("admin-hidden");
+                adminBtn.classList.remove("active");
             }
         }
 
-        // 检查Token有效性（严格按API返回格式处理）
         async function checkTokenValid() {
             try {
-                const res = await fetch(`${BASE_URL}/user/me?token=${token}`);
-                // 先判断响应状态码
+                const res = await fetch(`${BASE_URL}/user/me?token=${encodeURIComponent(token)}`);
                 if (!res.ok) {
                     throw new Error("Token验证接口响应失败");
                 }
+
                 const result = await res.json();
-                // 严格匹配API的成功码200
+
                 if (result.code !== 200) {
-                    // Token无效，清空本地存储
                     clearUserInfo();
+                    conversations = [];
                     initUserStatus();
+                    renderHistoryList();
                     return;
                 }
-                // 同步最新的管理员状态
+
+                username = result.data.username || username;
                 isAdmin = result.data.admin || false;
+                localStorage.setItem("username", username);
                 localStorage.setItem("isAdmin", isAdmin);
+                localStorage.setItem("admin", isAdmin);
+
                 initUserStatus();
                 await loadUserHistory();
             } catch (err) {
                 console.error("Token验证失败：", err);
                 clearUserInfo();
+                conversations = [];
                 initUserStatus();
+                renderHistoryList();
             }
         }
 
-        // 清空用户信息
         function clearUserInfo() {
             token = "";
             username = "";
@@ -676,10 +678,10 @@
             localStorage.removeItem("token");
             localStorage.removeItem("username");
             localStorage.removeItem("isAdmin");
+            localStorage.removeItem("admin");
             localStorage.removeItem("deepSearchEnabled");
         }
 
-        // 健康检查
         async function checkBackendHealth() {
             const el = document.getElementById("health-status");
             try {
@@ -689,6 +691,7 @@
                     el.style.background = "rgba(255,70,70,0.2)";
                     return;
                 }
+
                 const j = await r.json();
                 if (j.code === 200) {
                     el.textContent = "服务正常";
@@ -704,69 +707,66 @@
             }
         }
 
-        // 发送问题核心逻辑（适配API的参数规则）
         async function sendQuestion() {
             const input = document.getElementById("question-input");
             const btn = document.getElementById("send-btn");
-            const deepCb = document.getElementById("deep-search-checkbox");
-            const adminCb = document.getElementById("admin-mode-checkbox");
+            const deepBtn = document.getElementById("deep-btn");
+            const adminBtn = document.getElementById("admin-btn");
             const chat = document.getElementById("chat-messages");
 
             const q = input.value.trim();
-                if (!q || isRequesting) return;
+            if (!q || isRequesting) return;
 
-                /* 用户发出第一个问题后，切换为正常聊天布局 */
-                const chatContainer = document.getElementById("chat-container");
+            const chatContainer = document.getElementById("chat-container");
+            if (chatContainer.classList.contains("start-mode")) {
+                chatContainer.classList.remove("start-mode");
+                chatContainer.classList.add("chat-active");
+            }
 
-                if (chatContainer.classList.contains("start-mode")) {
-                    chatContainer.classList.remove("start-mode");
-                    chatContainer.classList.add("chat-active");
-                }
+            input.placeholder = "请输入你的问题";
 
-                /* 第一次提问后，把输入框提示恢复为原来的内容 */
-                input.placeholder = "请输入你的问题";
-
-                currentConversation.push({
-                    role:"user",
-                    content:q
-                });
+            currentConversation.push({
+                role: "user",
+                content: q
+            });
 
             isRequesting = true;
             btn.disabled = true;
             input.disabled = true;
             input.value = "";
 
-            const isDeep = deepCb.checked;
-            const isAdminMode = isAdmin && adminCb.checked;
+            const isDeep = deepBtn.classList.contains("active");
+            const isAdminMode = isAdmin && adminBtn.classList.contains("active");
 
-            // 添加用户消息到聊天框
             chat.innerHTML += `
             <div class="user-message message">
-                <div class="bubble">${q}</div>
+                <div class="bubble">${escapeHtml(q)}</div>
             </div>`;
 
-            // 显示加载状态
             const loadingId = "loading-" + Date.now();
             let loadingText = isDeep ? "深度思考中......" : "AI 思考中......";
             if (isAdminMode) loadingText = "管理员模式 - " + loadingText;
             chat.innerHTML += `<div id="${loadingId}" class="loading">${loadingText}</div>`;
-            chat.scrollTop = chat.scrollHeight;
+            scrollChatToBottom();
 
             try {
-                // 构建请求参数（严格按API文档）
                 const params = new URLSearchParams();
                 params.set("question", q);
                 if (isDeep) params.set("deep", "true");
                 if (isAdminMode) params.set("admin", "true");
                 if (token) params.set("token", token);
-                params.set("conversationId", currentConversationId);
 
-                // 发送请求（超时时间延长到15秒，适配管理员模式的处理耗时）
+                // 登录用户继续已有对话档案时才传 conversationId；新对话不传，让后端自动创建。
+                // 管理员模式按后端说明暂不接入 conversation_message，所以不传 conversationId。
+                if (token && currentConversationId && !isAdminMode) {
+                    params.set("conversationId", currentConversationId);
+                }
+
                 const ctrl = new AbortController();
                 const timer = setTimeout(() => ctrl.abort(), 15000);
-                const res = await fetch(`${BASE_URL}/question/ask?${params.toString()}`, { 
+                const res = await fetch(`${BASE_URL}/question/ask?${params.toString()}`, {
                     signal: ctrl.signal,
-                    method: "GET", // 明确指定GET方法（API要求）
+                    method: "GET",
                     headers: {
                         "Accept": "application/json"
                     }
@@ -779,46 +779,60 @@
 
                 const result = await res.json();
 
-                // 移除加载状态
                 const loadingEl = document.getElementById(loadingId);
                 if (loadingEl) loadingEl.remove();
 
-                // 处理返回结果（严格按API的code规则）
                 let answer = "";
+
                 if (result.code === 200) {
-                    answer = result.data || "暂无相关回答，可简化问题重试";
+                    if (result.data && typeof result.data === "object") {
+                        answer = result.data.answer || "暂无相关回答，可简化问题重试";
+
+                        if (token && result.data.conversationId) {
+                            const isFirstBackendConversationId = !currentConversationId;
+                            currentConversationId = result.data.conversationId;
+
+                            if (isFirstBackendConversationId && !isAdminMode) {
+                                await updateConversationTitle(currentConversationId, q);
+                            }
+                        }
+                    } else {
+                        answer = result.data || "暂无相关回答，可简化问题重试";
+                    }
                 } else {
                     answer = result.msg || "请求失败，请重试";
                 }
-                
-                // 添加AI回答到聊天框
+
                 const ans = formatAnswerWithSuffix(answer);
 
                 chat.innerHTML += `
                     <div class="ai-message message">
                         <div class="bubble no-bg">
-                            <div>${ans.text}</div>
-                            ${ans.suffix ? `<div class="bubble-suffix">${ans.suffix}</div>` : ""}
+                            <div>${escapeHtml(ans.text)}</div>
+                            ${ans.suffix ? `<div class="bubble-suffix">${escapeHtml(ans.suffix)}</div>` : ""}
                         </div>
                     </div>`;
 
                 currentConversation.push({
-                    role:"assistant",
-                    content:answer
+                    role: "assistant",
+                    content: String(answer)
                 });
 
+                if (token) {
+                    await loadUserHistory();
+                }
+
             } catch (err) {
-                // 异常处理
                 const loadingEl = document.getElementById(loadingId);
                 if (loadingEl) loadingEl.remove();
-                
-                const msg = err.name === "AbortError" 
-                    ? "请求超时（管理员模式处理可能需要更长时间），请重试" 
+
+                const msg = err.name === "AbortError"
+                    ? "请求超时（管理员模式处理可能需要更长时间），请重试"
                     : `请求失败：${err.message}`;
-                
+
                 chat.innerHTML += `
                 <div class="ai-message message">
-                    <div class="bubble" style="color:#f56c6c">${msg}</div>
+                    <div class="bubble" style="color:#f56c6c">${escapeHtml(msg)}</div>
                 </div>`;
                 console.error("发送问题失败：", err);
             } finally {
@@ -826,11 +840,10 @@
                 btn.disabled = false;
                 input.disabled = false;
                 input.focus();
-                chat.scrollTop = chat.scrollHeight;
+                scrollChatToBottom();
             }
         }
 
-        // 登录弹窗相关
         function showLoginModal() {
             document.getElementById("login-modal").classList.remove("hidden");
         }
@@ -846,7 +859,6 @@
             document.getElementById("login-err").textContent = "";
         }
 
-        // 注册弹窗相关
         function showRegisterModal() {
             document.getElementById("register-modal").classList.remove("hidden");
         }
@@ -862,7 +874,6 @@
             document.getElementById("register-err").textContent = "";
         }
 
-        // 切换登录/注册
         function switchToRegister() {
             hideLoginModal();
             showRegisterModal();
@@ -873,7 +884,6 @@
             showLoginModal();
         }
 
-        // 执行登录（修复核心异常点）
         async function doLogin() {
             const usernameEl = document.getElementById("login-username");
             const passwordEl = document.getElementById("login-password");
@@ -881,7 +891,6 @@
             const passwordVal = passwordEl.value.trim();
             let hasError = false;
 
-            // 前端校验（严格匹配API规则）
             clearLoginErrors();
             const usernameReg = /^[a-zA-Z0-9_]{3,20}$/;
             if (!usernameVal) {
@@ -903,60 +912,43 @@
             try {
                 const res = await fetch(`${BASE_URL}/user/login`, {
                     method: "POST",
-                    headers: { 
+                    headers: {
                         "Content-Type": "application/json",
                         "Accept": "application/json"
                     },
-                    body: JSON.stringify({ 
-                        username: usernameVal, 
-                        password: passwordVal 
+                    body: JSON.stringify({
+                        username: usernameVal,
+                        password: passwordVal
                     })
                 });
 
-                // 先判断响应状态码
                 if (!res.ok) {
                     throw new Error(`登录接口响应失败：${res.status}`);
                 }
 
                 const result = await res.json();
 
-                // 严格按API的code判断成功（核心修复点）
                 if (result.code === 200) {
-                    // 登录成功，保存用户信息（严格读取API返回的data字段）
                     token = result.data.token || "";
                     username = result.data.username || "";
                     isAdmin = result.data.admin || false;
-                    
-                    // 本地存储持久化
+
                     localStorage.setItem("token", token);
                     localStorage.setItem("username", username);
                     localStorage.setItem("isAdmin", isAdmin);
-                    
+                    localStorage.setItem("admin", isAdmin);
+
+                    conversations = [];
+                    currentConversation = [];
+                    currentConversationId = "";
+
                     hideLoginModal();
                     initUserStatus();
                     await loadUserHistory();
                     alert("登录成功！");
                 } else {
-                    const msg = result.msg || "";
-
-                    if (
-                        msg.includes("未注册") ||
-                        msg.includes("不存在") ||
-                        msg.includes("用户不存在") ||
-                        msg.includes("账号不存在")
-                    ) {
-                        document.getElementById("login-err").textContent =
-                            "该账号未注册，请先注册";
-                    } else if (
-                        msg.includes("密码") ||
-                        msg.includes("错误")
-                    ) {
-                        document.getElementById("login-err").textContent =
-                            "密码错误，请重新输入";
-                    } else {
-                        document.getElementById("login-err").textContent =
-                            msg || "登录失败，请重试";
-                    }
+                    document.getElementById("login-err").textContent =
+                        result.msg || "登录失败，请重试";
                 }
             } catch (err) {
                 console.error("登录请求失败：", err);
@@ -964,7 +956,6 @@
             }
         }
 
-        // 执行注册（修复核心异常点）
         async function doRegister() {
             const usernameEl = document.getElementById("register-username");
             const passwordEl = document.getElementById("register-password");
@@ -972,7 +963,6 @@
             const passwordVal = passwordEl.value.trim();
             let hasError = false;
 
-            // 前端校验（严格匹配API规则）
             clearRegisterErrors();
             const usernameReg = /^[a-zA-Z0-9_]{3,20}$/;
             if (!usernameVal) {
@@ -994,13 +984,13 @@
             try {
                 const res = await fetch(`${BASE_URL}/user/register`, {
                     method: "POST",
-                    headers: { 
+                    headers: {
                         "Content-Type": "application/json",
                         "Accept": "application/json"
                     },
-                    body: JSON.stringify({ 
-                        username: usernameVal, 
-                        password: passwordVal 
+                    body: JSON.stringify({
+                        username: usernameVal,
+                        password: passwordVal
                     })
                 });
 
@@ -1011,12 +1001,11 @@
                 const result = await res.json();
 
                 if (result.code === 200) {
-                    // 注册成功，自动切换到登录
                     alert("注册成功，请登录！");
                     switchToLogin();
                 } else {
-                    // 注册失败（显示API返回的错误信息）
-                    document.getElementById("register-err").textContent = result.msg || "注册失败，请更换用户名重试";
+                    document.getElementById("register-err").textContent =
+                        result.msg || "注册失败，请更换用户名重试";
                 }
             } catch (err) {
                 console.error("注册请求失败：", err);
@@ -1024,12 +1013,11 @@
             }
         }
 
-        // 退出登录
         function logout() {
             clearUserInfo();
             conversations = [];
             currentConversation = [];
-            currentConversationId = createConversationId();
+            currentConversationId = "";
             initUserStatus();
             renderHistoryList();
             createNewChat();
@@ -1037,15 +1025,8 @@
         }
 
         function createNewChat(){
-            saveCurrentConversationToHistory();
-
             currentConversation = [];
-            currentConversationId = createConversationId();
-            currentConversationSaved = false;
-
-            if (token) {
-                loadUserHistory();
-            }
+            currentConversationId = "";
 
             document
                 .getElementById("chat-container")
@@ -1063,17 +1044,21 @@
             input.value = "";
             input.placeholder = "你好！我是华南理工校园百事通，有任何校园问题都可以问我～";
             input.focus();
+
+            if (token) {
+                loadUserHistory();
+            }
         }
 
-        // 绑定按钮事件（修复登录按钮逻辑）
         document.getElementById("login-btn").addEventListener("click", function() {
             if (!token) {
                 showLoginModal();
             } else {
-                // 已登录时点击显示用户名提示
                 alert(`当前登录账号：${username}`);
             }
         });
+
+        document.getElementById("logout-btn").addEventListener("click", logout);
 
         function toggleSidebar(){
             document
@@ -1082,128 +1067,195 @@
                 .toggle("open");
         }
 
-        function saveCurrentConversationToHistory() {
-            if (!token || !username) return;
-            if (currentConversation.length === 0) return;
+        document.addEventListener("click", function(event) {
+            const sidebar = document.getElementById("sidebar");
+            const sidebarToggle = document.querySelector(".sidebar-toggle");
+            const chatHeader = document.querySelector(".chat-header");
 
-            const firstUserMsg = currentConversation.find(
-                msg => msg.role === "user"
-            );
-
-            if (!firstUserMsg) return;
-
-            const record = {
-                id: currentConversationId,
-                title: firstUserMsg.content,
-                messages: JSON.parse(JSON.stringify(currentConversation))
-            };
-
-            const index = conversations.findIndex(
-                item => item.id === currentConversationId
-            );
-
-            if (index >= 0) {
-                conversations[index] = record;
-            } else {
-                conversations.unshift(record);
+            // 如果侧边栏本来就没有展开，不做任何处理
+            if (!sidebar.classList.contains("open")) {
+                return;
             }
 
-            saveLocalHistory();
-            renderHistoryList();
-        }
+            // 点击左侧折叠栏内部，不折叠
+            if (sidebar.contains(event.target)) {
+                return;
+            }
+
+            // 点击左上角菜单按钮，不在这里折叠，交给原来的 toggleSidebar() 处理
+            if (sidebarToggle.contains(event.target)) {
+                return;
+            }
+
+            // 点击顶部栏，不折叠
+            if (chatHeader.contains(event.target)) {
+                return;
+            }
+
+            // 点击其它位置，折叠左侧栏
+            sidebar.classList.remove("open");
+        });
 
         function renderHistoryList(){
             const list = document.getElementById("history-list");
             list.innerHTML = "";
 
-            if(!token) return; // 游客不显示
+            if(!token) return;
 
             conversations.forEach((item,index)=>{
                 const div = document.createElement("div");
                 div.className = "history-record";
-                div.innerText = item.title;
+                div.innerText = item.title || "新对话";
                 div.onclick = ()=>openConversation(index);
                 list.appendChild(div);
             });
         }
 
         async function loadUserHistory() {
-            loadLocalHistory();
-            renderHistoryList();
+            if (!token) {
+                conversations = [];
+                renderHistoryList();
+                return;
+            }
+
+            try {
+                const res = await fetch(`${BASE_URL}/conversation/list?token=${encodeURIComponent(token)}`);
+                if (!res.ok) {
+                    throw new Error(`历史记录接口响应失败：${res.status}`);
+                }
+
+                const result = await res.json();
+
+                if (result.code === 200 && Array.isArray(result.data)) {
+                    conversations = result.data.map(item => ({
+                        id: item.conversationId,
+                        conversationId: item.conversationId,
+                        title: item.title || "新对话",
+                        messages: []
+                    }));
+                } else {
+                    conversations = [];
+                    console.error("读取历史记录失败：", result.msg);
+                }
+
+                renderHistoryList();
+            } catch (err) {
+                console.error("读取历史记录失败：", err);
+            }
         }
 
-        function openConversation(index){
+        async function openConversation(index){
             if(!token){
                 alert("请先登录");
                 return;
             }
 
-            const data =
-                conversations[index];
+            const data = conversations[index];
+            if (!data || !data.conversationId) return;
 
-            const chat =
-                document.getElementById(
-                    "chat-messages"
+            try {
+                const res = await fetch(
+                    `${BASE_URL}/conversation/messages?token=${encodeURIComponent(token)}&conversationId=${encodeURIComponent(data.conversationId)}`
                 );
 
-            chat.innerHTML = "";
-
-            data.messages.forEach(msg=>{
-                if(msg.role==="user"){
-                    chat.innerHTML += `
-                    <div class="user-message message">
-                        <div class="bubble">
-                            ${msg.content}
-                        </div>
-                    </div>`;
-                }else{
-
-                    chat.innerHTML += `
-                    <div class="ai-message message">
-                        <div class="bubble no-bg">
-                            ${msg.content}
-                        </div>
-                    </div>`;
+                if (!res.ok) {
+                    throw new Error(`历史详情接口响应失败：${res.status}`);
                 }
-            });
 
-            currentConversation =
-                JSON.parse(
-                    JSON.stringify(
-                        data.messages
-                    )
-                );
+                const result = await res.json();
 
-            currentConversationId = data.id || createConversationId();
-            
-            document
-                .getElementById("chat-container")
-                .classList
-                .remove("start-mode");
+                if (result.code !== 200 || !Array.isArray(result.data)) {
+                    alert(result.msg || "读取历史对话失败");
+                    return;
+                }
 
-            document
-                .getElementById("chat-container")
-                .classList
-                .add("chat-active");
+                const chat = document.getElementById("chat-messages");
+                chat.innerHTML = "";
 
-            document.getElementById("question-input").placeholder = "请输入你的问题";
+                currentConversation = result.data.map(msg => {
+                    const role = msg.role === "USER" ? "user" : "assistant";
+                    const content = msg.content || "";
+
+                    if(role === "user"){
+                        chat.innerHTML += `
+                        <div class="user-message message">
+                            <div class="bubble">${escapeHtml(content)}</div>
+                        </div>`;
+                    } else {
+                        const ans = formatAnswerWithSuffix(content);
+                        chat.innerHTML += `
+                        <div class="ai-message message">
+                            <div class="bubble no-bg">
+                                <div>${escapeHtml(ans.text)}</div>
+                                ${ans.suffix ? `<div class="bubble-suffix">${escapeHtml(ans.suffix)}</div>` : ""}
+                            </div>
+                        </div>`;
+                    }
+
+                    return { role, content };
+                });
+
+                currentConversationId = data.conversationId;
+
+                document
+                    .getElementById("chat-container")
+                    .classList
+                    .remove("start-mode");
+
+                document
+                    .getElementById("chat-container")
+                    .classList
+                    .add("chat-active");
+
+                document.getElementById("question-input").placeholder = "请输入你的问题";
+                scrollChatToBottom();
+
+            } catch(err) {
+                console.error("拉取对话档案失败：", err);
+                alert("读取历史对话失败，请稍后重试");
+            }
         }
 
-        document.getElementById("logout-btn").addEventListener("click", logout);
+        async function updateConversationTitle(conversationId, title) {
+            if (!token || !conversationId || !title) return;
+
+            try {
+                const params = new URLSearchParams();
+                params.set("token", token);
+                params.set("conversationId", conversationId);
+                params.set("title", title);
+
+                const res = await fetch(`${BASE_URL}/conversation/title?${params.toString()}`, {
+                    method: "POST"
+                });
+
+                const result = await res.json();
+                if (result.code !== 200) {
+                    console.error("修改对话标题失败：", result.msg);
+                }
+            } catch (err) {
+                console.error("修改对话标题失败：", err);
+            }
+        }
+
+        function scrollChatToBottom() {
+            const chat = document.getElementById("chat-messages");
+            setTimeout(() => {
+                chat.scrollTop = chat.scrollHeight;
+            }, 50);
+        }
 
         function formatAnswerWithSuffix(answerText) {
-            // 后缀列表
             const suffixes = [
                 "（知识库信息）",
                 "【提示：数据库中没有相关内容，此内容为 AI 自动生成。】",
                 "(来自当前对话上传文件)",
-                "(来自你的全局知识库)"
+                "(来自用户全局知识库)"
             ];
 
-            let mainText = answerText;
+            let mainText = String(answerText || "");
             let detectedSuffix = "";
 
-            // 检查是否包含已知后缀
             for (const s of suffixes) {
                 if (mainText.endsWith(s)) {
                     mainText = mainText.slice(0, -s.length).trim();
@@ -1216,6 +1268,31 @@
                 text: mainText,
                 suffix: detectedSuffix
             };
+        }
+
+        function escapeHtml(text) {
+            return String(text || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function toggleDeepSearch() {
+            const deepBtn = document.getElementById("deep-btn");
+            deepBtn.classList.toggle("active");
+            localStorage.setItem(
+                "deepSearchEnabled",
+                deepBtn.classList.contains("active")
+            );
+        }
+
+        function toggleAdminMode() {
+            if (!isAdmin) return;
+
+            const adminBtn = document.getElementById("admin-btn");
+            adminBtn.classList.toggle("active");
         }
     </script>
 </body>
