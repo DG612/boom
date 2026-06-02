@@ -950,7 +950,9 @@
 
                 chat.innerHTML += `
                 <div class="ai-message message">
-                    <div class="bubble" style="color:#f56c6c">${escapeHtml(msg)}</div>
+                    <div class="bubble no-bg">
+                        <div class="markdown error-markdown">${escapeHtml(msg)}</div>
+                    </div>
                 </div>`;
                 console.error("发送问题失败：", err);
             } finally {
