@@ -69,7 +69,7 @@
             flex: 1;
             width: min(62%, 860px);
             margin: 0 auto;
-            padding: 20px 0 110px;
+            padding: 20px 16px 110px 0; 
             overflow-y: auto;
             display: flex;
             flex-direction: column;
@@ -114,7 +114,7 @@
             left: 50%;
             bottom: 16px;
             transform: translateX(-50%);
-            width: min(62%, 860px);
+            width: min(58%, 780px);
             padding: 15px;
             border: 1px solid #555;
             border-radius: 24px;
@@ -130,7 +130,7 @@
             top:50%;
             bottom:auto;
             transform:translate(-50%,-50%);
-            width:min(62%, 860px);
+            width:min(58%, 780px);
         }
 
         .chat-container.chat-active .input-area {
@@ -257,9 +257,15 @@
         .form-item input {
             width: 100%;
             padding: 10px 12px;
-            border: 1px solid #ddd;
+            border: none;
             border-radius: 8px;
             font-size: 14px;
+            background: #3a3a3a;
+            color: #e0e0e0;
+        }
+
+        .form-item input::placeholder {
+            color: #b0b0b0;
         }
 
         .modal-btns {
@@ -278,37 +284,47 @@
         }
 
         .primary-btn {
-            background: #409eff;
-            color: white;
+            background: #6200ee;
+            color: #fff;
         }
 
         .cancel-btn {
-            background: #f5f7fa;
-            color: #666;
+            background: #666666;
+            color: #e0e0e0;
         }
 
         .register-link {
             margin-top: 12px;
             text-align: right;
+        }
+
+        .register-link span {
+            display: inline-block;
             font-size: 13px;
             color: #999;
             cursor: pointer;
+            padding: 2px 4px;
         }
 
-        .register-link:hover {
-            color: #333;
+        .register-link span:hover {
+            color: #d0d0d0;
         }
 
         .login-link {
             margin-top: 12px;
             text-align: right;
+        }
+
+        .login-link span {
+            display: inline-block;
             font-size: 13px;
             color: #999;
             cursor: pointer;
+            padding: 2px 4px;
         }
 
-        .login-link:hover {
-            color: #333;
+        .login-link span:hover {
+            color: #d0d0d0;
         }
 
         .hidden {
@@ -500,8 +516,10 @@
                 <button class="modal-btn primary-btn" onclick="doLogin()">登录</button>
             </div>
 
-            <div class="register-link" onclick="switchToRegister()">
-                如没有账号，请先注册
+            <div class="register-link">
+                <span onclick="switchToRegister()">
+                    如没有账号，请先注册
+                </span>
             </div>
         </div>
     </div>
@@ -526,8 +544,10 @@
                 <button class="modal-btn primary-btn" onclick="doRegister()">注册</button>
             </div>
 
-            <div class="register-link login-link" onclick="switchToLogin()">
-                登录
+            <div class="register-link login-link">
+                <span onclick="switchToLogin()">
+                    登录
+                </span>
             </div>
         </div>
     </div>
@@ -1140,7 +1160,7 @@
 
                     chat.innerHTML += `
                     <div class="ai-message message">
-                        <div class="bubble">
+                        <div class="bubble no-bg">
                             ${msg.content}
                         </div>
                     </div>`;
