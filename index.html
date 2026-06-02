@@ -262,6 +262,30 @@
             color: #666;
         }
 
+        .register-link {
+            margin-top: 12px;
+            text-align: right;
+            font-size: 13px;
+            color: #999;
+            cursor: pointer;
+        }
+
+        .register-link:hover {
+            color: #333;
+        }
+
+        .login-link {
+            margin-top: 12px;
+            text-align: right;
+            font-size: 13px;
+            color: #999;
+            cursor: pointer;
+        }
+
+        .login-link:hover {
+            color: #333;
+        }
+
         .hidden {
             display: none;
         }
@@ -515,7 +539,10 @@
             <div class="modal-btns">
                 <button class="modal-btn cancel-btn" onclick="hideLoginModal()">取消</button>
                 <button class="modal-btn primary-btn" onclick="doLogin()">登录</button>
-                <button class="modal-btn primary-btn" onclick="switchToRegister()">注册</button>
+            </div>
+
+            <div class="register-link" onclick="switchToRegister()">
+                如没有账号，请先注册
             </div>
         </div>
     </div>
@@ -538,7 +565,10 @@
             <div class="modal-btns">
                 <button class="modal-btn cancel-btn" onclick="hideRegisterModal()">取消</button>
                 <button class="modal-btn primary-btn" onclick="doRegister()">注册</button>
-                <button class="modal-btn primary-btn" onclick="switchToLogin()">登录</button>
+            </div>
+
+            <div class="register-link login-link" onclick="switchToLogin()">
+                登录
             </div>
         </div>
     </div>
@@ -549,11 +579,38 @@
         let token = localStorage.getItem("token") || "";
         let username = localStorage.getItem("username") || "";
         let isAdmin = localStorage.getItem("isAdmin") === "true" || false;
-        let conversations = JSON.parse(
-            localStorage.getItem("conversations") || "[]"
-        );
-
+        let conversations = [];
         let currentConversation = [];
+        let currentConversationId = createConversationId();
+        let currentConversationSaved = false;
+
+        function getHistoryKey() {
+            return username ? `chat_history_${username}` : "";
+        }
+
+        function loadLocalHistory() {
+            if (!token || !username) {
+                conversations = [];
+                return;
+            }
+
+            conversations = JSON.parse(
+                localStorage.getItem(getHistoryKey()) || "[]"
+            );
+        }
+
+        function saveLocalHistory() {
+            if (!token || !username) return;
+
+            localStorage.setItem(
+                getHistoryKey(),
+                JSON.stringify(conversations)
+            );
+        }
+
+        function createConversationId() {
+            return "chat_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+        }
 
         window.onload = function () {
             checkBackendHealth();
@@ -576,10 +633,6 @@
             if (token) {
                 checkTokenValid();
             }
-
-            window.addEventListener("beforeunload", function(){
-                saveCurrentConversation();
-            });
         };
 
         // 初始化用户状态UI
@@ -623,6 +676,7 @@
                 isAdmin = result.data.admin || false;
                 localStorage.setItem("isAdmin", isAdmin);
                 initUserStatus();
+                await loadUserHistory();
             } catch (err) {
                 console.error("Token验证失败：", err);
                 clearUserInfo();
@@ -686,12 +740,10 @@
                 /* 第一次提问后，把输入框提示恢复为原来的内容 */
                 input.placeholder = "请输入你的问题";
 
-                if(currentConversation.length === 0){
-                    currentConversation.push({
-                        role:"user",
-                        content:q
-                    });
-                }
+                currentConversation.push({
+                    role:"user",
+                    content:q
+                });
 
             isRequesting = true;
             btn.disabled = true;
@@ -721,6 +773,7 @@
                 if (isDeep) params.set("deep", "true");
                 if (isAdminMode) params.set("admin", "true");
                 if (token) params.set("token", token);
+                params.set("conversationId", currentConversationId);
 
                 // 发送请求（超时时间延长到15秒，适配管理员模式的处理耗时）
                 const ctrl = new AbortController();
@@ -764,6 +817,8 @@
                     role:"assistant",
                     content:answer
                 });
+
+                saveCurrentConversationToHistory();
 
             } catch (err) {
                 // 异常处理
@@ -892,10 +947,29 @@
                     
                     hideLoginModal();
                     initUserStatus();
+                    await loadUserHistory();
                     alert("登录成功！");
                 } else {
-                    // 登录失败（显示API返回的错误信息）
-                    document.getElementById("login-err").textContent = result.msg || "登录失败：用户名或密码错误";
+                    const msg = result.msg || "";
+
+                    if (
+                        msg.includes("未注册") ||
+                        msg.includes("不存在") ||
+                        msg.includes("用户不存在") ||
+                        msg.includes("账号不存在")
+                    ) {
+                        document.getElementById("login-err").textContent =
+                            "该账号未注册，请先注册";
+                    } else if (
+                        msg.includes("密码") ||
+                        msg.includes("错误")
+                    ) {
+                        document.getElementById("login-err").textContent =
+                            "密码错误，请重新输入";
+                    } else {
+                        document.getElementById("login-err").textContent =
+                            msg || "登录失败，请重试";
+                    }
                 }
             } catch (err) {
                 console.error("登录请求失败：", err);
@@ -966,19 +1040,24 @@
         // 退出登录
         function logout() {
             clearUserInfo();
-            initUserStatus();
-            // 清空内存中的历史记录显示
             conversations = [];
+            currentConversation = [];
+            currentConversationId = createConversationId();
+            initUserStatus();
             renderHistoryList();
             alert("已退出登录");
         }
 
         function createNewChat(){
-
-            // 保存上一个会话
-            saveCurrentConversation();
+            saveCurrentConversationToHistory();
 
             currentConversation = [];
+            currentConversationId = createConversationId();
+            currentConversationSaved = false;
+
+            if (token) {
+                loadUserHistory();
+            }
 
             document
                 .getElementById("chat-container")
@@ -1015,6 +1094,36 @@
                 .toggle("open");
         }
 
+        function saveCurrentConversationToHistory() {
+            if (!token || !username) return;
+            if (currentConversation.length === 0) return;
+
+            const firstUserMsg = currentConversation.find(
+                msg => msg.role === "user"
+            );
+
+            if (!firstUserMsg) return;
+
+            const record = {
+                id: currentConversationId,
+                title: firstUserMsg.content,
+                messages: JSON.parse(JSON.stringify(currentConversation))
+            };
+
+            const index = conversations.findIndex(
+                item => item.id === currentConversationId
+            );
+
+            if (index >= 0) {
+                conversations[index] = record;
+            } else {
+                conversations.unshift(record);
+            }
+
+            saveLocalHistory();
+            renderHistoryList();
+        }
+
         function renderHistoryList(){
             const list = document.getElementById("history-list");
             list.innerHTML = "";
@@ -1030,39 +1139,8 @@
             });
         }
 
-        function saveConversation(firstQuestion){
-
-            if(!token){
-                return;
-            }
-
-            const exists =
-                conversations.some(
-                    x => x.messages === currentConversation
-                );
-
-            if(exists){
-                return;
-            }
-
-            conversations.unshift({
-
-                title:firstQuestion,
-
-                messages:
-                    JSON.parse(
-                        JSON.stringify(
-                            currentConversation
-                        )
-                    )
-
-            });
-
-            localStorage.setItem(
-                "conversations",
-                JSON.stringify(conversations)
-            );
-
+        async function loadUserHistory() {
+            loadLocalHistory();
             renderHistoryList();
         }
 
@@ -1114,6 +1192,8 @@
                         data.messages
                     )
                 );
+
+            currentConversationId = data.id || createConversationId();
             
             document
                 .getElementById("chat-container")
@@ -1126,24 +1206,6 @@
                 .getElementById("sidebar")
                 .classList
                 .remove("open");
-        }
-
-        // 保存当前会话为一次历史记录
-        function saveCurrentConversation(){
-            if(!token) return;
-            if(currentConversation.length === 0) return;
-
-            const firstUserMsg = currentConversation.find(m => m.role === "user");
-            if(!firstUserMsg) return;
-
-            const newRecord = {
-                title: firstUserMsg.content,
-                messages: JSON.parse(JSON.stringify(currentConversation))
-            };
-
-            conversations.unshift(newRecord);
-            localStorage.setItem("conversations", JSON.stringify(conversations));
-            renderHistoryList();
         }
 
         document.getElementById("logout-btn").addEventListener("click", logout);
