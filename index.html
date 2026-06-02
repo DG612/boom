@@ -440,19 +440,119 @@
         }
 
         .history-record{
-            padding:12px;
+            position: relative;
+            padding:12px 42px 12px 12px;
             background: #2a2a2a;
             border: 1px solid #444;
             color: #e0e0e0;
             border-radius:8px;
             cursor:pointer;
+            overflow: visible;
+            display: flex;
+            align-items: center;
+            min-height: 48px;
+        }
+
+        /* 历史记录标题文字 */
+        .history-record-title{
+            flex: 1;
             overflow:hidden;
             white-space:nowrap;
             text-overflow:ellipsis;
         }
 
+        /* 鼠标放到历史记录上时，背景提亮 */
         .history-record:hover{
             background: #3b3b3b;
+        }
+
+        /* 当前选中的历史记录 */
+        .history-record.selected {
+            background: #6200ee; 
+            border-color: #6200ee;
+            color: #fff;
+        }
+
+        /* 选中状态下 hover 仍然保持紫色，但稍微亮一点 */
+        .history-record.selected:hover {
+            background: #7f39fb;
+            border-color: #7f39fb;
+        }
+
+        /* 历史记录右侧三个点按钮 */
+        .history-more-btn{
+            position:absolute;
+            right:8px;
+            top:50%;
+            transform:translateY(-50%);
+            width:26px;
+            height:26px;
+            border:none;
+            border-radius:6px;
+            background: transparent;
+            color:#d0d0d0;
+            cursor:pointer;
+            font-size:18px;
+            line-height:26px;
+            opacity:0;
+            transition: background 0.2s, opacity 0.2s;
+        }
+
+        /* 鼠标放到历史记录上时显示右侧按钮 */
+        .history-record:hover .history-more-btn{
+            opacity:1;
+        }
+
+        /* 鼠标放到右侧按钮上时，按钮提亮 */
+        .history-more-btn:hover{
+            background: rgba(255,255,255,0.15);
+        }
+
+        /* 当前打开菜单时，让三个点按钮保持显示 */
+        .history-record.menu-open .history-more-btn{
+            opacity:1;
+            background: rgba(255,255,255,0.15);
+        }
+
+        /* 历史记录操作菜单 */
+        .history-menu{
+            position:absolute;
+            right:8px;
+            top:42px;
+            width:118px;
+            padding:6px;
+            background:#2f2f2f;
+            border:1px solid #444;
+            border-radius:10px;
+            box-shadow:0 8px 24px rgba(0,0,0,0.35);
+            z-index:600;
+        }
+
+        /* 菜单里的按钮 */
+        .history-menu-item{
+            width:100%;
+            padding:9px 10px;
+            border:none;
+            border-radius:8px;
+            background:transparent;
+            color:#e0e0e0;
+            font-size:14px;
+            text-align:left;
+            cursor:pointer;
+        }
+
+        /* 菜单按钮 hover */
+        .history-menu-item:hover{
+            background:#444;
+        }
+
+        /* 删除按钮红色 */
+        .history-menu-item.danger{
+            color:#ff6b6b;
+        }
+
+        .history-menu-item.danger:hover{
+            background:rgba(255,80,80,0.15);
         }
 
         /* 主页面不再因为侧边栏改变宽度 */
@@ -488,7 +588,7 @@
         <div class="sidebar-content">
             <div class="new-chat-card"
                 onclick="createNewChat()">
-                + 新对话
+                新对话
             </div>
 
             <div class="history-label" style="font-size:13px;color:#999;margin:6px 0 4px 4px;">
@@ -595,10 +695,7 @@
         let conversations = [];
         let currentConversation = [];
         let currentConversationId = "";
-
-        function createConversationId() {
-            return "chat_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
-        }
+        let openedHistoryMenuIndex = null;
 
         window.onload = function () {
             checkBackendHealth();
@@ -785,30 +882,30 @@
                 let answer = "";
 
                 if (result.code === 200) {
-                    if (result.data && typeof result.data === "object") {
-                        answer = result.data.answer || "暂无相关回答，可简化问题重试";
+                if (result.data && typeof result.data === "object") {
+                    answer = result.data.answer || "暂无相关回答，可简化问题重试";
 
-                        if (token && result.data.conversationId) {
-                            const isFirstBackendConversationId = !currentConversationId;
-                            currentConversationId = result.data.conversationId;
+                    if (token && !isAdminMode && result.data.conversationId) {
+                        const isFirstBackendConversationId = !currentConversationId;
+                        currentConversationId = result.data.conversationId;
 
-                            if (isFirstBackendConversationId && !isAdminMode) {
-                                await updateConversationTitle(currentConversationId, q);
-                            }
+                        if (isFirstBackendConversationId) {
+                            await updateConversationTitle(currentConversationId, q);
                         }
-                    } else {
-                        answer = result.data || "暂无相关回答，可简化问题重试";
                     }
                 } else {
-                    answer = result.msg || "请求失败，请重试";
+                    answer = result.data || "暂无相关回答，可简化问题重试";
                 }
+            } else {
+                answer = result.msg || "请求失败，请重试";
+            }
 
                 const ans = formatAnswerWithSuffix(answer);
 
                 chat.innerHTML += `
                     <div class="ai-message message">
                         <div class="bubble no-bg">
-                            <div>${escapeHtml(ans.text)}</div>
+                            <div>${renderMarkdownToHtml(ans.text)}</div>
                             ${ans.suffix ? `<div class="bubble-suffix">${escapeHtml(ans.suffix)}</div>` : ""}
                         </div>
                     </div>`;
@@ -1025,6 +1122,8 @@
         }
 
         function createNewChat(){
+            closeHistoryMenus();
+
             currentConversation = [];
             currentConversationId = "";
 
@@ -1068,32 +1167,15 @@
         }
 
         document.addEventListener("click", function(event) {
-            const sidebar = document.getElementById("sidebar");
-            const sidebarToggle = document.querySelector(".sidebar-toggle");
-            const chatHeader = document.querySelector(".chat-header");
-
-            // 如果侧边栏本来就没有展开，不做任何处理
-            if (!sidebar.classList.contains("open")) {
+            // 点击菜单本身或三个点按钮时，不关闭菜单
+            if (
+                event.target.closest(".history-menu") ||
+                event.target.closest(".history-more-btn")
+            ) {
                 return;
             }
 
-            // 点击左侧折叠栏内部，不折叠
-            if (sidebar.contains(event.target)) {
-                return;
-            }
-
-            // 点击左上角菜单按钮，不在这里折叠，交给原来的 toggleSidebar() 处理
-            if (sidebarToggle.contains(event.target)) {
-                return;
-            }
-
-            // 点击顶部栏，不折叠
-            if (chatHeader.contains(event.target)) {
-                return;
-            }
-
-            // 点击其它位置，折叠左侧栏
-            sidebar.classList.remove("open");
+            closeHistoryMenus();
         });
 
         function renderHistoryList(){
@@ -1105,10 +1187,232 @@
             conversations.forEach((item,index)=>{
                 const div = document.createElement("div");
                 div.className = "history-record";
-                div.innerText = item.title || "新对话";
-                div.onclick = ()=>openConversation(index);
+
+                // 如果这条历史记录就是当前打开的对话，则保持紫色选中状态
+                if (item.conversationId && item.conversationId === currentConversationId) {
+                    div.classList.add("selected");
+                }
+
+                // 点击整条历史记录，打开该对话
+                div.onclick = () => openConversation(index);
+
+                // 历史记录标题文字
+                const titleSpan = document.createElement("span");
+                titleSpan.className = "history-record-title";
+                titleSpan.innerText = item.title || "新对话";
+
+                // 右侧三个点按钮
+                const moreBtn = document.createElement("button");
+                moreBtn.type = "button";
+                moreBtn.className = "history-more-btn";
+                moreBtn.innerHTML = "⋯";
+                moreBtn.title = "更多操作";
+
+                // 点击三个点按钮时，不触发打开对话
+                moreBtn.onclick = (event) => {
+                    event.stopPropagation();
+                    toggleHistoryMenu(index, div);
+                };
+
+                div.appendChild(titleSpan);
+                div.appendChild(moreBtn);
+
                 list.appendChild(div);
             });
+        }
+
+        function closeHistoryMenus() {
+            openedHistoryMenuIndex = null;
+
+            document.querySelectorAll(".history-menu").forEach(menu => {
+                menu.remove();
+            });
+
+            document.querySelectorAll(".history-record.menu-open").forEach(record => {
+                record.classList.remove("menu-open");
+            });
+        }
+
+        function toggleHistoryMenu(index, recordEl) {
+            // 如果当前点的是已经打开的菜单，则关闭
+            if (openedHistoryMenuIndex === index) {
+                closeHistoryMenus();
+                return;
+            }
+
+            closeHistoryMenus();
+
+            openedHistoryMenuIndex = index;
+            recordEl.classList.add("menu-open");
+
+            const menu = document.createElement("div");
+            menu.className = "history-menu";
+
+            // 防止点击菜单时触发打开对话
+            menu.onclick = (event) => {
+                event.stopPropagation();
+            };
+
+            const renameBtn = document.createElement("button");
+            renameBtn.type = "button";
+            renameBtn.className = "history-menu-item";
+            renameBtn.innerText = "重命名";
+            renameBtn.onclick = (event) => {
+                event.stopPropagation();
+                renameHistoryConversation(index);
+            };
+
+            const deleteBtn = document.createElement("button");
+            deleteBtn.type = "button";
+            deleteBtn.className = "history-menu-item danger";
+            deleteBtn.innerText = "删除";
+            deleteBtn.onclick = (event) => {
+                event.stopPropagation();
+                deleteHistoryConversation(index);
+            };
+
+            menu.appendChild(renameBtn);
+            menu.appendChild(deleteBtn);
+
+            recordEl.appendChild(menu);
+        }
+
+        async function renameHistoryConversation(index) {
+            const data = conversations[index];
+
+            if (!token) {
+                alert("请先登录");
+                return;
+            }
+
+            if (!data || !data.conversationId) {
+                alert("未找到该历史记录");
+                return;
+            }
+
+            const oldTitle = data.title || "新对话";
+            const newTitle = prompt("请输入新的对话标题", oldTitle);
+
+            // 用户点取消
+            if (newTitle === null) {
+                closeHistoryMenus();
+                return;
+            }
+
+            const title = newTitle.trim();
+
+            if (!title) {
+                alert("标题不能为空");
+                return;
+            }
+
+            try {
+                const params = new URLSearchParams();
+                params.set("token", token);
+                params.set("conversationId", data.conversationId);
+                params.set("title", title);
+
+                const res = await fetch(`${BASE_URL}/conversation/title?${params.toString()}`, {
+                    method: "POST"
+                });
+
+                if (!res.ok) {
+                    throw new Error(`重命名接口响应失败：${res.status}`);
+                }
+
+                const result = await res.json();
+
+                if (result.code !== 200) {
+                    alert(result.msg || "重命名失败");
+                    return;
+                }
+
+                closeHistoryMenus();
+
+                // 更新本地标题，避免界面延迟
+                data.title = title;
+
+                // 重新拉取历史列表，保证和后端一致
+                await loadUserHistory();
+
+            } catch (err) {
+                console.error("重命名历史记录失败：", err);
+                alert("重命名失败，请稍后重试");
+            }
+        }
+
+        async function deleteHistoryConversation(index) {
+            const data = conversations[index];
+
+            if (!token) {
+                alert("请先登录");
+                return;
+            }
+
+            if (!data || !data.conversationId) {
+                alert("未找到该历史记录");
+                return;
+            }
+
+            const ok = confirm(`确定要删除「${data.title || "新对话"}」吗？`);
+
+            if (!ok) {
+                closeHistoryMenus();
+                return;
+            }
+
+            try {
+                const params = new URLSearchParams();
+                params.set("token", token);
+                params.set("conversationId", data.conversationId);
+
+                const res = await fetch(`${BASE_URL}/conversation/archive?${params.toString()}`, {
+                    method: "POST"
+                });
+
+                if (!res.ok) {
+                    throw new Error(`删除接口响应失败：${res.status}`);
+                }
+
+                const result = await res.json();
+
+                if (result.code !== 200) {
+                    alert(result.msg || "删除失败");
+                    return;
+                }
+
+                closeHistoryMenus();
+
+                // 如果删除的是当前正在打开的对话，则回到新对话页面
+                if (currentConversationId === data.conversationId) {
+                    currentConversation = [];
+                    currentConversationId = "";
+
+                    document
+                        .getElementById("chat-container")
+                        .classList
+                        .remove("chat-active");
+
+                    document
+                        .getElementById("chat-container")
+                        .classList
+                        .add("start-mode");
+
+                    document.getElementById("chat-messages").innerHTML = "";
+
+                    const input = document.getElementById("question-input");
+                    input.value = "";
+                    input.placeholder = "你好！我是华南理工校园百事通，有任何校园问题都可以问我～";
+                    input.focus();
+                }
+
+                // 重新加载历史记录，删除后的记录不会再显示
+                await loadUserHistory();
+
+            } catch (err) {
+                console.error("删除历史记录失败：", err);
+                alert("删除失败，请稍后重试");
+            }
         }
 
         async function loadUserHistory() {
@@ -1150,8 +1454,19 @@
                 return;
             }
 
+            closeHistoryMenus();
+
             const data = conversations[index];
             if (!data || !data.conversationId) return;
+
+            const historyList = document.getElementById("history-list");
+            Array.from(historyList.children).forEach((div, idx) => {
+                if (idx === index) {
+                    div.classList.add("selected");
+                } else {
+                    div.classList.remove("selected");
+                }
+            });
 
             try {
                 const res = await fetch(
@@ -1186,7 +1501,7 @@
                         chat.innerHTML += `
                         <div class="ai-message message">
                             <div class="bubble no-bg">
-                                <div>${escapeHtml(ans.text)}</div>
+                                <div>${renderMarkdownToHtml(ans.text)}</div>
                                 ${ans.suffix ? `<div class="bubble-suffix">${escapeHtml(ans.suffix)}</div>` : ""}
                             </div>
                         </div>`;
@@ -1293,6 +1608,32 @@
 
             const adminBtn = document.getElementById("admin-btn");
             adminBtn.classList.toggle("active");
+        }
+
+        function renderMarkdownToHtml(mdText) {
+            if (!mdText) return "";
+
+            let html = mdText
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+
+            // 加粗 **
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+            // 斜体 *
+            html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+            // 无序列表 - 
+            html = html.replace(/^\s*-\s(.+)$/gm, '<li>$1</li>');
+            if (html.includes('<li>')) {
+                html = '<ul>' + html + '</ul>';
+            }
+
+            // 一级标题 #
+            html = html.replace(/^#\s+(.+)$/gm, '<h3>$1</h3>');
+
+            return html;
         }
     </script>
 </body>
