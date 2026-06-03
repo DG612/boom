@@ -917,7 +917,7 @@
     <div class="chat-container start-mode" id="chat-container">
 
         <div class="chat-header">
-            <span>华南理工校园百事通</span>
+            <span id="conversation-title">新对话</span>
             <div class="user-info">
                 <span id="health-status" class="health-status">检查服务中...</span>
                 <button id="login-btn" class="history-btn">登录/注册</button>
@@ -1009,6 +1009,11 @@
         let currentConversation = [];
         let currentConversationId = "";
         let openedHistoryMenuIndex = null;
+
+        function setConversationTitle(title) {
+            const titleEl = document.getElementById("conversation-title");
+            titleEl.innerText = title || "新对话";
+        }
 
         window.onload = function () {
             checkBackendHealth();
@@ -1458,6 +1463,7 @@
             input.value = "";
             input.placeholder = "你好！我是华南理工校园百事通，有任何校园问题都可以问我～";
             input.focus();
+            setConversationTitle("新对话");
 
             if (token) {
                 loadUserHistory();
@@ -1838,6 +1844,7 @@
                     .add("chat-active");
 
                 document.getElementById("question-input").placeholder = "请输入你的问题";
+                setConversationTitle(data.title || "新对话");
                 scrollChatToBottom();
 
             } catch(err) {
