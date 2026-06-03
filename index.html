@@ -410,26 +410,34 @@
             font-size:24px;
             cursor:pointer;
             z-index:300;
+            transition:left 0.3s ease;
+        }
+
+        body.sidebar-open .sidebar-toggle{
+            left:260px;
         }
 
         /* 左侧折叠栏：默认隐藏 */
         .sidebar{
             position:fixed;
             left:-260px;
-            top:72px;
+            top:0; 
             width:260px;
-            height:calc(100vh - 72px);
+            height:100vh;
             background: #1f1f1f;
             color: #e0e0e0;
             border-right:1px solid #444;
-            transition:left 0.3s ease;
+            transition:left 0.3s ease, box-shadow 0.3s ease;
             z-index:200;
-            padding:12px;
+            padding:84px 12px 12px 12px;
+            overflow-y:auto;
+            box-shadow:none;
         }
 
         /* 展开时显示 */
         .sidebar.open{
             left:0;
+            box-shadow: 6px 0 18px rgba(0,0,0,0.28);
         }
 
         .sidebar-content{
@@ -587,24 +595,79 @@
         }
 
         .ai-message .bubble.no-bg .markdown {
-            font-size: 15px;           /* 正文字体略大 */
-            line-height: 1.6;          /* 行距增大 */
+            font-size: 15px;
+            line-height: 1.75;
             margin-bottom: 4px;
+            word-break: break-word;
         }
 
+        /* 一级标题 */
+        .ai-message .bubble.no-bg .markdown h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 16px 0 10px 0;
+            line-height: 1.5;
+        }
+
+        /* 二级标题 */
+        .ai-message .bubble.no-bg .markdown h2 {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 14px 0 8px 0;
+            line-height: 1.5;
+        }
+
+        /* 三级标题 */
         .ai-message .bubble.no-bg .markdown h3 {
-            font-size: 17px;           /* 标题略大 */
-            font-weight: bold;
+            font-size: 16px;
+            font-weight: 700;
             margin: 12px 0 6px 0;
+            line-height: 1.5;
         }
 
+        /* 普通段落 */
+        .ai-message .bubble.no-bg .markdown p {
+            margin: 6px 0;
+        }
+
+        /* 无序列表 */
         .ai-message .bubble.no-bg .markdown ul {
-            padding-left: 20px;        /* 列表缩进 */
+            padding-left: 22px;
             margin: 8px 0;
         }
 
+        /* 有序列表 */
+        .ai-message .bubble.no-bg .markdown ol {
+            padding-left: 24px;
+            margin: 8px 0;
+        }
+
+        /* 列表项 */
         .ai-message .bubble.no-bg .markdown li {
-            margin: 4px 0;
+            margin: 5px 0;
+            line-height: 1.7;
+        }
+
+        /* 引用块，比如 > 提示 */
+        .ai-message .bubble.no-bg .markdown blockquote {
+            margin: 10px 0;
+            padding: 8px 12px;
+            border-left: 3px solid #777;
+            background: rgba(255,255,255,0.05);
+            color: #cfcfcf;
+            border-radius: 6px;
+        }
+
+        /* 加粗 */
+        .ai-message .bubble.no-bg .markdown strong {
+            font-weight: 700;
+            color: #f0f0f0;
+        }
+
+        /* 斜体 */
+        .ai-message .bubble.no-bg .markdown em {
+            font-style: italic;
+            color: #d8d8d8;
         }
 
         /* 百事通后缀显示在右下角，灰色小字 */
@@ -655,8 +718,13 @@
             }
 
             .sidebar {
-                top: 64px;
-                height: calc(100vh - 64px);
+                top: 0;
+                height: 100vh;
+                padding:76px 12px 12px 12px;
+            }
+
+            body.sidebar-open .sidebar-toggle{
+                left:260px;
             }
 
             .chat-messages {
@@ -681,15 +749,16 @@
 
             .chat-header {
                 height: 58px;
-                padding: 8px 8px 8px 52px;
-                justify-content: flex-start;
+                padding: 8px 52px 8px 52px;
+                justify-content: center;
             }
 
             .chat-header > span {
-                position: static;
-                transform: none;
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
                 font-size: 15px;
-                max-width: 38vw;
+                max-width: 60%;   
                 overflow: hidden;
                 white-space: nowrap;
                 text-overflow: ellipsis;
@@ -718,16 +787,21 @@
             }
 
             .sidebar {
-                top: 58px;
+                top: 0;
                 left: -82vw;
                 width: 82vw;
                 max-width: 320px;
-                height: calc(100dvh - 58px);
-                padding: 10px;
+                height: 100dvh;
+                padding:68px 10px 10px 10px;
+                overflow-y: auto;
             }
 
             .sidebar.open {
                 left: 0;
+            }
+
+            body.sidebar-open .sidebar-toggle{
+                left: min(82vw, 320px);
             }
 
             .new-chat-card {
@@ -773,11 +847,24 @@
 
             .ai-message .bubble.no-bg .markdown {
                 font-size: 14px;
-                line-height: 1.7;
+                line-height: 1.75;
+            }
+
+            .ai-message .bubble.no-bg .markdown h1 {
+                font-size: 18px;
+            }
+
+            .ai-message .bubble.no-bg .markdown h2 {
+                font-size: 17px;
             }
 
             .ai-message .bubble.no-bg .markdown h3 {
                 font-size: 16px;
+            }
+
+            .ai-message .bubble.no-bg .markdown ul,
+            .ai-message .bubble.no-bg .markdown ol {
+                padding-left: 20px;
             }
 
             .input-area {
@@ -1481,10 +1568,14 @@
         document.getElementById("logout-btn").addEventListener("click", logout);
 
         function toggleSidebar(){
-            document
-                .getElementById("sidebar")
-                .classList
-                .toggle("open");
+            const sidebar = document.getElementById("sidebar");
+
+            sidebar.classList.toggle("open");
+
+            document.body.classList.toggle(
+                "sidebar-open",
+                sidebar.classList.contains("open")
+            );
         }
 
         document.addEventListener("click", function(event) {
@@ -1935,25 +2026,146 @@
         function renderMarkdownToHtml(mdText) {
             if (!mdText) return "";
 
-            let html = mdText
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
+            const lines = String(mdText || "")
+                .replace(/\r\n/g, "\n")
+                .replace(/\r/g, "\n")
+                .split("\n");
 
-            // 加粗 **
-            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            let html = "";
+            let inUl = false;
+            let inOl = false;
 
-            // 斜体 *
-            html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-
-            // 无序列表 - 
-            html = html.replace(/^\s*-\s(.+)$/gm, '<li>$1</li>');
-            if (html.includes('<li>')) {
-                html = '<ul>' + html + '</ul>';
+            function closeLists() {
+                if (inUl) {
+                    html += "</ul>";
+                    inUl = false;
+                }
+                if (inOl) {
+                    html += "</ol>";
+                    inOl = false;
+                }
             }
 
-            // 一级标题 #
-            html = html.replace(/^#\s+(.+)$/gm, '<h3>$1</h3>');
+            function escapeLine(text) {
+                return String(text || "")
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            function parseInline(text) {
+                let safe = escapeLine(text);
+
+                /*
+                    先保护 **加粗**，避免被 *斜体* 误伤
+                */
+                safe = safe.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+
+                /*
+                    斜体：
+                    只处理成对的单星号，例如：*这是斜体*
+                    不处理行首的 * 列表符号
+                */
+                safe = safe.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, "$1<em>$2</em>");
+
+                return safe;
+            }
+
+            lines.forEach(rawLine => {
+                const line = rawLine.trim();
+
+                if (!line) {
+                    closeLists();
+                    return;
+                }
+
+                /*
+                    三级标题：### 标题
+                */
+                if (/^###\s+/.test(line)) {
+                    closeLists();
+                    html += `<h3>${parseInline(line.replace(/^###\s+/, ""))}</h3>`;
+                    return;
+                }
+
+                /*
+                    二级标题：## 标题
+                */
+                if (/^##\s+/.test(line)) {
+                    closeLists();
+                    html += `<h2>${parseInline(line.replace(/^##\s+/, ""))}</h2>`;
+                    return;
+                }
+
+                /*
+                    一级标题：# 标题
+                */
+                if (/^#\s+/.test(line)) {
+                    closeLists();
+                    html += `<h1>${parseInline(line.replace(/^#\s+/, ""))}</h1>`;
+                    return;
+                }
+
+                /*
+                    引用：> 提示内容
+                */
+                if (/^>\s?/.test(line)) {
+                    closeLists();
+                    html += `<blockquote>${parseInline(line.replace(/^>\s?/, ""))}</blockquote>`;
+                    return;
+                }
+
+                /*
+                    有序列表：1. 内容 / 2. 内容
+                */
+                if (/^\d+\.\s+/.test(line)) {
+                    if (inUl) {
+                        html += "</ul>";
+                        inUl = false;
+                    }
+                    if (!inOl) {
+                        html += "<ol>";
+                        inOl = true;
+                    }
+
+                    html += `<li>${parseInline(line.replace(/^\d+\.\s+/, ""))}</li>`;
+                    return;
+                }
+
+                /*
+                    无序列表：
+                    - 内容
+                    * 内容
+                    • 内容
+
+                    注意：
+                    这里的 * 内容 会被当成列表，
+                    不是斜体。
+                */
+                if (/^[-*•]\s+/.test(line)) {
+                    if (inOl) {
+                        html += "</ol>";
+                        inOl = false;
+                    }
+                    if (!inUl) {
+                        html += "<ul>";
+                        inUl = true;
+                    }
+
+                    html += `<li>${parseInline(line.replace(/^[-*•]\s+/, ""))}</li>`;
+                    return;
+                }
+
+                /*
+                    普通段落
+                */
+                closeLists();
+                html += `<p>${parseInline(line)}</p>`;
+            });
+
+            closeLists();
 
             return `<div class="markdown">${html}</div>`;
         }
