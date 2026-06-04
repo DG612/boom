@@ -146,6 +146,29 @@
             border-bottom-right-radius: 6px;
         }
 
+        .greeting-text{
+            position:absolute;
+            left:50%;
+            top:calc(50% - 130px);
+            transform:translateX(-50%);
+            width:min(92%, 780px);
+            text-align:center;
+            color:#f0f0f0;
+            font-size:24px;
+            font-weight:700;
+            line-height:1.4;
+            z-index:5;
+            pointer-events:none;
+        }
+
+        .chat-container.chat-active .greeting-text{
+            display:none;
+        }
+
+        .chat-container:not(.start-mode) .greeting-text{
+            display:none;
+        }
+
         .input-area {
             position: absolute;
             left: 50%;
@@ -215,29 +238,34 @@
 
         #question-input {
             width: 100%;
-            padding: 12px 92px 12px 15px;
+            padding: 20px 100px 60px 18px; 
             background: #2a2a2a;
             color: #e0e0e0;
             border: 1px solid #555;
-            border-radius: 24px;
+            border-radius: 28px;
             resize: none;
-            min-height: 48px;
-            max-height: min(140px, 30vh);
+            min-height: 140px;
+            max-height: min(220px, 50vh);
             outline: none;
             font-size: clamp(14px, 1.6vw, 16px);
-            line-height: 1.6;
-            transition: border 0.2s;
+            line-height: 1.8;
+            transition: border-color 0.2s, box-shadow 0.2s;
             display: block;
         }
 
         #question-input:focus {
-            border-color: #7f39fb;
+            border-color: #888;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.12);
         }
 
         .option-buttons {
+            position: absolute;
+            left: 14px;
+            bottom: 14px;
             display: flex;
             gap: 8px;
             justify-content: flex-start;
+            z-index: 2;
         }
 
         .option-btn {
@@ -254,13 +282,14 @@
         }
 
         .option-btn.active {
-            background: #6200ee;
-            border-color: #6200ee;
+            background: #444;
+            border-color: #aaa;
             color: #fff;
         }
 
         .option-btn:hover {
-            border-color: #7f39fb;
+            border-color: #999;
+            background: #3a3a3a;
         }
 
         .admin-hidden {
@@ -269,26 +298,27 @@
 
         #send-btn {
             position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            height: 34px;
-            padding: 0 18px;
-            background: #6200ee;
-            color: #fff;
+            right: 12px;
+            bottom: 14px;
+            height: 36px;
+            padding: 0 20px;
+            background: #ffffff;
+            color: #000000;
             border: none;
             border-radius: 18px;
             cursor: pointer;
             font-size: 14px;
-            transition: background 0.2s;
+            font-weight: 500;
+            transition: background 0.2s, transform 0.2s;
         }
 
         #send-btn:hover {
-            background: #7f39fb;
+            background: #f0f0f0;
         }
 
         #send-btn:disabled {
-            background: #a0cfff;
+            background: #bdbdbd;
+            color: #555;
             cursor: not-allowed;
         }
 
@@ -296,6 +326,30 @@
             color: #999;
             font-size: 14px;
             padding: 8px 16px;
+        }
+
+        /* 顶部自定义提示气泡 */
+        .toast-message {
+            position: fixed;
+            top: 28px;
+            left: 50%;
+            transform: translate(-50%, -12px);
+            padding: 10px 18px;
+            background: rgba(70, 70, 70, 0.96);
+            color: #ffffff;
+            font-size: 14px;
+            border-radius: 999px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.28);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 3000;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            white-space: nowrap;
+        }
+
+        .toast-message.show {
+            opacity: 1;
+            transform: translate(-50%, 0);
         }
 
         /* 登录注册弹窗样式 */
@@ -336,7 +390,7 @@
             display: block;
             margin-bottom: 6px;
             font-size: 14px;
-            color: #333;
+            color: #bdbdbd;
         }
 
         .form-item input {
@@ -369,13 +423,21 @@
         }
 
         .primary-btn {
-            background: #6200ee;
+            background: #555;
             color: #fff;
         }
 
+        .primary-btn:hover {
+            background: #666;
+        }
+
         .cancel-btn {
-            background: #666666;
-            color: #e0e0e0;
+            background: #e6e6e6;
+            color: #000;
+        }
+
+        .cancel-btn:hover {
+            background: #f2f2f2;
         }
 
         .register-link {
@@ -452,6 +514,7 @@
 
         body.sidebar-open .sidebar-toggle{
             left:260px;
+            box-shadow: 6px 0 18px rgba(0,0,0,0.28);
         }
 
         /* 左侧折叠栏：默认隐藏 */
@@ -508,8 +571,10 @@
 
         .sidebar-content{
             height:100%;
-            padding:0 8px 10px 0;
-            overflow-y:auto;
+            padding:0 8px 82px 0;
+            overflow:hidden;
+            display:flex;
+            flex-direction:column;
         }
 
         /* 默认隐藏滚动条 */
@@ -677,16 +742,43 @@
 
         .new-chat-card{
             padding:14px;
-            border: 1px solid #444;
+            border:1px solid #444;
             border-radius:8px;
             cursor:pointer;
             margin-bottom:10px;
-            background: #2a2a2a;
-            color: #e0e0e0;
+            background:#2a2a2a;
+            color:#e0e0e0;
+            flex-shrink:0;
         }
 
         .new-chat-card:hover{
             background: #3b3b3b;
+        }
+
+        .history-label{
+            font-size:13px;
+            color:#999;
+            margin:6px 0 4px 4px;
+            flex-shrink:0;
+        }
+
+        .history-scroll-area{
+            flex:1;
+            overflow-y:auto;
+            padding-right:0;
+        }
+
+        .history-scroll-area::-webkit-scrollbar{
+            width:6px;
+        }
+
+        .history-scroll-area::-webkit-scrollbar-track{
+            background:transparent;
+        }
+
+        .history-scroll-area::-webkit-scrollbar-thumb{
+            background:#555;
+            border-radius:3px;
         }
 
         .history-records{
@@ -698,15 +790,15 @@
         .history-record{
             position: relative;
             padding:12px 42px 12px 12px;
-            background: #2a2a2a;
-            border: 1px solid #444;
-            color: #e0e0e0;
+            background:transparent;
+            border:none;
+            color:#e0e0e0;
             border-radius:8px;
             cursor:pointer;
             overflow: visible;
-            display: flex;
-            align-items: center;
-            min-height: 48px;
+            display:flex;
+            align-items:center;
+            min-height:48px;
         }
 
         /* 历史记录标题文字 */
@@ -722,19 +814,18 @@
             background: #3b3b3b;
         }
 
-        /* 当前选中的历史记录 */
+        /* 当前选中的历史记录：提亮灰色 */
         .history-record.selected {
-            background: #6200ee; 
-            border-color: #6200ee;
+            background: #3f3f3f;
+            border-color: #555;
             color: #fff;
         }
 
-        /* 选中状态下 hover 仍然保持紫色，但稍微亮一点 */
+        /* 选中状态下 hover：继续保持灰色提亮 */
         .history-record.selected:hover {
-            background: #7f39fb;
-            border-color: #7f39fb;
+            background: #4a4a4a;
+            border-color: #666;
         }
-
         /* 历史记录右侧三个点按钮 */
         .history-more-btn{
             position:absolute;
@@ -1101,6 +1192,7 @@
 
             body.sidebar-open .sidebar-toggle{
                 left: min(68vw, 260px);
+                box-shadow: 6px 0 18px rgba(0,0,0,0.28);
             }
 
             .new-chat-card {
@@ -1177,9 +1269,12 @@
             }
 
             .option-buttons {
+                left: 12px;
+                bottom: 12px;
                 gap: 6px;
                 overflow-x: auto;
-                padding-bottom: 2px;
+                max-width: calc(100% - 92px);
+                padding-bottom: 0;
             }
 
             .option-buttons::-webkit-scrollbar {
@@ -1193,17 +1288,18 @@
             }
 
             #question-input {
-                min-height: 48px;
-                max-height: 108px;
-                padding: 11px 74px 11px 14px;
+                min-height: 92px;
+                max-height: 128px;
+                padding: 13px 82px 48px 14px;
                 font-size: 14px;
-                border-radius: 22px;
+                border-radius: 24px;
             }
 
             #send-btn {
-                right: 7px;
+                right: 10px;
+                bottom: 12px;
                 height: 32px;
-                padding: 0 13px;
+                padding: 0 14px;
                 font-size: 13px;
                 border-radius: 17px;
             }
@@ -1289,6 +1385,8 @@
     </style>
 </head>
 <body>
+    <div id="toast-message" class="toast-message"></div>
+
     <button class="sidebar-toggle"
             onclick="toggleSidebar()">
         ☰
@@ -1305,12 +1403,14 @@
                 新对话
             </div>
 
-            <div class="history-label" style="font-size:13px;color:#999;margin:6px 0 4px 4px;">
+            <div class="history-label">
                 历史记录
             </div>
 
-            <div id="history-list"
-                class="history-records">
+            <div class="history-scroll-area">
+                <div id="history-list"
+                    class="history-records">
+                </div>
             </div>
         </div>
 
@@ -1347,16 +1447,18 @@
             </div>
         </div>
 
-        <div class="input-area">
-            <div class="option-buttons">
-                <button type="button" id="deep-btn" class="option-btn" onclick="toggleDeepSearch()">深度思考</button>
-                <button type="button" id="admin-btn" class="option-btn admin-hidden" onclick="toggleAdminMode()">管理员模式</button>
-            </div>
+        <div id="greeting" class="greeting-text"></div>
 
+        <div class="input-area">
             <div class="input-wrapper">
                 <textarea id="question-input"
                     placeholder="你好！我是华南理工校园百事通，有任何校园问题都可以问我～"
                     onkeydown="if(event.keyCode===13&&!event.shiftKey){event.preventDefault();sendQuestion();}"></textarea>
+
+                <div class="option-buttons">
+                    <button type="button" id="deep-btn" class="option-btn" onclick="toggleDeepSearch()">深度思考</button>
+                    <button type="button" id="admin-btn" class="option-btn admin-hidden" onclick="toggleAdminMode()">管理员模式</button>
+                </div>
 
                 <button id="send-btn" onclick="sendQuestion()">发送</button>
             </div>
@@ -1432,6 +1534,22 @@
         const SIDEBAR_WIDTH = 260;
         const MIN_CHAT_WIDTH_AFTER_PUSH = 720;
 
+        let toastTimer = null;
+
+        function showToast(message) {
+            const toast = document.getElementById("toast-message");
+            if (!toast) return;
+
+            toast.textContent = message;
+            toast.classList.add("show");
+
+            clearTimeout(toastTimer);
+
+            toastTimer = setTimeout(() => {
+                toast.classList.remove("show");
+            }, 2200);
+        }
+
         function setConversationTitle(title) {
             const titleEl = document.getElementById("conversation-title");
             titleEl.innerText = title || "新对话";
@@ -1454,6 +1572,26 @@
                 isSidebarOpen && canPushChat
             );
         }
+        
+        function updateGreeting() {
+            const greetingEl = document.getElementById("greeting");
+            if (!greetingEl) return;
+
+            const now = new Date();
+            const hour = now.getHours();
+            let timeGreeting = "";
+            if (hour >= 5 && hour < 12) timeGreeting = "上午好";
+            else if (hour >= 12 && hour < 18) timeGreeting = "下午好";
+            else if (hour >= 18 && hour < 22) timeGreeting = "晚上好";
+            else timeGreeting = "凌晨好";
+
+            const username = localStorage.getItem("username") || "";
+            const name = username ? username + "同学" : "同学";
+            greetingEl.textContent = `${timeGreeting}，${name}`;
+        }
+
+        // 页面加载时调用
+        window.addEventListener("load", updateGreeting);
 
         window.onload = function () {
             checkBackendHealth();
@@ -1468,6 +1606,7 @@
             }
 
             initUserStatus();
+            updateGreeting();
             renderHistoryList();
 
             updateSidebarPushMode();
@@ -1634,33 +1773,50 @@
         async function checkTokenValid() {
             try {
                 const res = await fetch(`${BASE_URL}/user/me?token=${encodeURIComponent(token)}`);
+
                 if (!res.ok) {
-                    throw new Error("Token验证接口响应失败");
+                    throw new Error("Token验证接口响应失败：" + res.status);
                 }
 
                 const result = await res.json();
 
+                /*
+                只有后端明确返回 token 无效时，才清空登录信息。
+                避免刷新页面时因为网络波动、后端临时未响应，误删 localStorage。
+                */
                 if (result.code !== 200) {
+                    console.warn("Token 已失效：", result.msg);
+
                     clearUserInfo();
                     conversations = [];
+                    currentConversation = [];
+                    currentConversationId = "";
+
                     initUserStatus();
+                    updateGreeting();
                     renderHistoryList();
                     return;
                 }
 
-                username = result.data.username || username;
-                isAdmin = result.data.admin || false;
+                if (result.data) {
+                    username = result.data.username || username;
+                    isAdmin = result.data.admin === true;
+                }
+
+                localStorage.setItem("token", token);
                 localStorage.setItem("username", username);
-                localStorage.setItem("isAdmin", isAdmin);
-                localStorage.setItem("admin", isAdmin);
+                localStorage.setItem("isAdmin", String(isAdmin));
+                localStorage.setItem("admin", String(isAdmin));
 
                 initUserStatus();
+                updateGreeting();
                 await loadUserHistory();
+
             } catch (err) {
-                console.error("Token验证失败：", err);
-                clearUserInfo();
-                conversations = [];
+                console.error("Token验证接口异常，暂时保留本地登录信息：", err);
+
                 initUserStatus();
+                updateGreeting();
                 renderHistoryList();
             }
         }
@@ -1941,8 +2097,9 @@
                     hideLoginModal();
                     updateSidebarUserInfo();
                     initUserStatus();
+                    updateGreeting();
                     await loadUserHistory();
-                    alert("登录成功！");
+                    showToast("登录成功");
                 } else {
                     document.getElementById("login-err").textContent =
                         result.msg || "登录失败，请重试";
@@ -2016,9 +2173,10 @@
             currentConversation = [];
             currentConversationId = "";
             initUserStatus();
+            updateGreeting();
             renderHistoryList();
             createNewChat();
-            alert("已退出登录");
+            showToast("已退出登录");
         }
 
         function createNewChat(){
