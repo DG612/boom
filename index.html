@@ -30,6 +30,7 @@
             position: fixed;
             top: 0;
             left: 0;
+            transition: left 0.3s ease, width 0.3s ease;
         }
 
         .chat-header {
@@ -68,7 +69,7 @@
 
         .chat-messages {
             flex: 1;
-            width: min(92vw, 860px);
+            width: min(92%, 860px);
             margin: 0 auto;
             padding: 20px 16px 120px 16px;
             overflow-y: auto;
@@ -115,7 +116,7 @@
             left: 50%;
             bottom: 16px;
             transform: translateX(-50%);
-            width: min(92vw, 780px);
+            width: min(92%, 780px);
             padding: 0;
             border: none;
             border-radius: 0;
@@ -132,7 +133,7 @@
             top:50%;
             bottom:auto;
             transform:translate(-50%,-50%);
-            width:min(92vw, 780px);
+            width:min(92%, 780px);
         }
 
         .chat-container.chat-active .input-area {
@@ -429,7 +430,7 @@
             border-right:1px solid #444;
             transition:left 0.3s ease, box-shadow 0.3s ease;
             z-index:200;
-            padding:84px 12px 12px 12px;
+            padding:100px 12px 12px 12px;
             overflow-y:auto;
             box-shadow:none;
         }
@@ -438,6 +439,35 @@
         .sidebar.open{
             left:0;
             box-shadow: 6px 0 18px rgba(0,0,0,0.28);
+        }
+
+        /* 左侧折叠栏左上角 Logo */
+        .sidebar-brand{
+            position: absolute;
+            top: 6px;
+            left: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 58px;
+            padding: 6px 8px;
+            background: #1f1f1f;
+            border-radius: 10px;
+            z-index: 1;
+        }
+
+        .sidebar-brand img{
+            display: block;
+            height: 60px; 
+            width: auto;
+            max-width: 190px;
+            object-fit: contain;
+            border: none;
+            filter:
+                brightness(1.18)
+                contrast(1.22)
+                drop-shadow(0 0 1px rgba(255,255,255,0.55))
+                drop-shadow(0 2px 8px rgba(255,255,255,0.08));
         }
 
         .sidebar-content{
@@ -580,10 +610,30 @@
             background:rgba(255,80,80,0.15);
         }
 
-        /* 主页面不再因为侧边栏改变宽度 */
+        /* 主页面默认占满整个窗口 */
         .chat-container{
             left:0;
             width:100vw;
+        }
+
+        /* 
+        当侧边栏展开且窗口宽度足够时：
+        主对话区向右移动一个侧边栏宽度，并缩小宽度，避免被挤出屏幕
+        */
+        body.sidebar-open.sidebar-push .chat-container{
+            left:260px;
+            width:calc(100vw - 260px);
+        }
+
+        /* 
+        标题始终相对于当前 chat-container 居中。
+        max-width 防止标题和右侧登录/状态按钮重叠。
+        */
+        .chat-header > span {
+            max-width: calc(100% - 260px);
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
         }
 
         /* 隐藏AI回答气泡背景 */
@@ -720,21 +770,32 @@
             .sidebar {
                 top: 0;
                 height: 100vh;
-                padding:76px 12px 12px 12px;
+                padding:102px 12px 12px 12px;
             }
 
+            .sidebar-brand{
+                top: 12px;
+                left: 12px;
+                min-height: 52px;
+                padding: 5px 7px;
+            }
+
+            .sidebar-brand img{
+                height: 44px;
+                max-width: 172px;
+            }
             body.sidebar-open .sidebar-toggle{
                 left:260px;
             }
 
             .chat-messages {
-                width: min(94vw, 760px);
+                width: min(94%, 760px);
                 padding: 18px 12px 118px 12px;
             }
 
             .input-area,
             .chat-container.start-mode .input-area {
-                width: min(94vw, 720px);
+                width: min(94%, 720px);
             }
         }
 
@@ -745,6 +806,11 @@
             .chat-container {
                 width: 100vw;
                 height: 100dvh;
+            }
+
+            body.sidebar-open.sidebar-push .chat-container {
+                left: 0;
+                width: 100vw;
             }
 
             .chat-header {
@@ -792,12 +858,23 @@
                 width: 82vw;
                 max-width: 320px;
                 height: 100dvh;
-                padding:68px 10px 10px 10px;
+                padding:94px 10px 10px 10px; 
                 overflow-y: auto;
             }
-
             .sidebar.open {
                 left: 0;
+            }
+
+            .sidebar-brand{
+                top: 10px;
+                left: 10px;
+                min-height: 46px;
+                padding: 4px 6px;
+            }
+
+            .sidebar-brand img{
+                height: 38px;
+                max-width: 150px;
             }
 
             body.sidebar-open .sidebar-toggle{
@@ -985,6 +1062,10 @@
     </button>
 
     <div class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <img src="./bbg_logo_with_bomb_icon.png" alt="华工百事通logo">
+        </div>
+
         <div class="sidebar-content">
             <div class="new-chat-card"
                 onclick="createNewChat()">
@@ -1096,10 +1177,30 @@
         let currentConversation = [];
         let currentConversationId = "";
         let openedHistoryMenuIndex = null;
+        const SIDEBAR_WIDTH = 260;
+        const MIN_CHAT_WIDTH_AFTER_PUSH = 720;
 
         function setConversationTitle(title) {
             const titleEl = document.getElementById("conversation-title");
             titleEl.innerText = title || "新对话";
+        }
+
+        function updateSidebarPushMode() {
+            const sidebar = document.getElementById("sidebar");
+            if (!sidebar) return;
+
+            const isSidebarOpen = sidebar.classList.contains("open");
+
+            /*
+            判断窗口宽度是否足够：
+            只有剩余宽度还能容纳主对话区时，才启用推开效果。
+            */
+            const canPushChat = window.innerWidth - SIDEBAR_WIDTH >= MIN_CHAT_WIDTH_AFTER_PUSH;
+
+            document.body.classList.toggle(
+                "sidebar-push",
+                isSidebarOpen && canPushChat
+            );
         }
 
         window.onload = function () {
@@ -1116,6 +1217,9 @@
 
             initUserStatus();
             renderHistoryList();
+
+            updateSidebarPushMode();
+            window.addEventListener("resize", updateSidebarPushMode);
 
             if (token) {
                 checkTokenValid();
@@ -1576,6 +1680,8 @@
                 "sidebar-open",
                 sidebar.classList.contains("open")
             );
+
+            updateSidebarPushMode();
         }
 
         document.addEventListener("click", function(event) {
