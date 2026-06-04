@@ -966,6 +966,22 @@
             line-height: 1.5;
         }
 
+        /* 四级标题 */
+        .ai-message .bubble.no-bg .markdown h4 {
+            font-size: 15px;
+            font-weight: 600;
+            margin: 10px 0 5px 0;
+            line-height: 1.4;
+        }
+
+        /* Markdown 分割线 */
+        .ai-message .bubble.no-bg .markdown hr {
+            border: none;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.18);
+            margin: 16px 0;
+        }
+
         /* 普通段落 */
         .ai-message .bubble.no-bg .markdown p {
             margin: 6px 0;
@@ -2729,6 +2745,20 @@
 
                 if (!line) {
                     closeLists();
+                    return;
+                }
+
+                // 分割线
+                if (/^(-{3,}|\*{3,}|_{3,})$/.test(line)) {
+                    closeLists();
+                    html += "<hr>";
+                    return;
+                }
+
+                // 四级标题：#### 标题 或 ####标题
+                if (/^####\s*/.test(line)) {
+                    closeLists();
+                    html += `<h4>${parseInline(line.replace(/^####\s*/, ""))}</h4>`;
                     return;
                 }
 
