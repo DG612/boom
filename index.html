@@ -72,7 +72,8 @@
             flex: 1;
             width: min(92%, 860px);
             margin: 0 auto;
-            padding: 20px 16px 120px 16px;
+            padding: 20px 16px 170px 16px;
+            scroll-padding-bottom: 170px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
@@ -238,17 +239,17 @@
 
         #question-input {
             width: 100%;
-            padding: 20px 100px 60px 18px; 
+            padding: 16px 100px 52px 18px; 
             background: #2a2a2a;
             color: #e0e0e0;
             border: 1px solid #555;
             border-radius: 28px;
             resize: none;
-            min-height: 140px;
-            max-height: min(220px, 50vh);
+            min-height: 118px;
+            max-height: min(200px, 50vh);
             outline: none;
             font-size: clamp(14px, 1.6vw, 16px);
-            line-height: 1.8;
+            line-height: 1.7;
             transition: border-color 0.2s, box-shadow 0.2s;
             display: block;
         }
@@ -261,7 +262,7 @@
         .option-buttons {
             position: absolute;
             left: 14px;
-            bottom: 14px;
+            bottom: 12px;
             display: flex;
             gap: 8px;
             justify-content: flex-start;
@@ -299,7 +300,7 @@
         #send-btn {
             position: absolute;
             right: 12px;
-            bottom: 14px;
+            bottom: 12px;
             height: 36px;
             padding: 0 20px;
             background: #ffffff;
@@ -364,6 +365,22 @@
             justify-content: center;
             align-items: center;
             z-index: 1000;
+        }
+
+        /* 重命名弹窗：层级高于历史记录右侧菜单 */
+        .rename-modal {
+            z-index: 2500;
+        }
+
+        /* 重命名输入框聚焦效果，和主输入框风格统一 */
+        #rename-title-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.16);
+        }
+
+        /* 重命名弹窗按钮稍微紧凑一点 */
+        .rename-modal .modal-content {
+            max-width: 420px;
         }
 
         .modal-content {
@@ -528,7 +545,7 @@
             border-right:1px solid #444;
             transition:left 0.3s ease, box-shadow 0.3s ease;
             z-index:200;
-            padding:100px 12px 12px 12px;
+            padding:100px 8px 12px 12px;
             overflow-y:hidden;
             box-shadow:none;
         }
@@ -658,16 +675,15 @@
 
         /* 用户菜单 */
         .sidebar-user-menu{
-            position:absolute;
-            left:12px;
-            bottom:70px;
-            width:140px;
+            position:fixed;
+            width:118px;
             padding:6px;
             background:#2f2f2f;
             border:1px solid #444;
             border-radius:10px;
             box-shadow:0 8px 24px rgba(0,0,0,0.35);
-            z-index:700;
+            z-index:1200;
+            transform-origin:left bottom;
         }
 
         .sidebar-user-menu-item{
@@ -687,10 +703,11 @@
         }
 
         .sidebar-user-menu-item.danger {
-            color: #ff4d4f; 
+            color:#ff6b6b;
         }
+
         .sidebar-user-menu-item.danger:hover {
-            background: rgba(255, 77, 79, 0.15);
+            background:rgba(255,80,80,0.15);
         }
 
         /* 个人信息页面 */
@@ -740,7 +757,9 @@
         }
 
         .new-chat-card{
-            padding:14px;
+            width: calc(100% - 8px);
+            min-height:48px;
+            padding:0 12px;
             border:1px solid #444;
             border-radius:8px;
             cursor:pointer;
@@ -748,6 +767,8 @@
             background:#2a2a2a;
             color:#e0e0e0;
             flex-shrink:0;
+            display:flex;
+            align-items:center;
         }
 
         .new-chat-card:hover{
@@ -764,7 +785,14 @@
         .history-scroll-area{
             flex:1;
             overflow-y:auto;
-            padding-right:0;
+            padding-right:8px;
+            margin-right:-8px;
+            scrollbar-gutter: stable;
+        }
+
+        /* 打开历史记录操作菜单时，禁止历史记录区域滚动 */
+        .history-scroll-area.scroll-locked{
+            overflow-y:scroll;
         }
 
         .history-scroll-area::-webkit-scrollbar{
@@ -784,10 +812,12 @@
             display:flex;
             flex-direction:column;
             gap:8px;
+            width:100%;
         }
 
         .history-record{
             position: relative;
+            width:100%;
             padding:12px 42px 12px 12px;
             background:transparent;
             border:none;
@@ -798,6 +828,8 @@
             display:flex;
             align-items:center;
             min-height:48px;
+            box-shadow:none;
+            transition: background 0.2s, box-shadow 0.2s;
         }
 
         /* 历史记录标题文字 */
@@ -811,6 +843,7 @@
         /* 鼠标放到历史记录上时，背景提亮 */
         .history-record:hover{
             background: #3b3b3b;
+            box-shadow:0 8px 18px rgba(0,0,0,0.22);
         }
 
         /* 当前选中的历史记录：提亮灰色 */
@@ -818,13 +851,16 @@
             background: #3f3f3f;
             border-color: #555;
             color: #fff;
+            box-shadow:0 8px 18px rgba(0,0,0,0.24);
         }
 
         /* 选中状态下 hover：继续保持灰色提亮 */
         .history-record.selected:hover {
             background: #4a4a4a;
             border-color: #666;
+            box-shadow:0 10px 22px rgba(0,0,0,0.28);
         }
+
         /* 历史记录右侧三个点按钮 */
         .history-more-btn{
             position:absolute;
@@ -860,18 +896,32 @@
             background: rgba(255,255,255,0.15);
         }
 
+        /* 打开历史记录右侧菜单时，当前历史记录框保持阴影 */
+        .history-record.menu-open{
+            background:#3f3f3f;
+            box-shadow:0 10px 22px rgba(0,0,0,0.28);
+        }
+
         /* 历史记录操作菜单 */
         .history-menu{
-            position:absolute;
-            right:8px;
-            top:42px;
+            position:fixed;
             width:118px;
             padding:6px;
             background:#2f2f2f;
             border:1px solid #444;
             border-radius:10px;
             box-shadow:0 8px 24px rgba(0,0,0,0.35);
-            z-index:600;
+            z-index:1200;
+        }
+
+        /* 向右下方展开时，动画原点在左上角 */
+        .history-menu.drop-down{
+            transform-origin:left top;
+        }
+
+        /* 向右上方展开时，动画原点在左下角 */
+        .history-menu.drop-up{
+            transform-origin:left bottom;
         }
 
         /* 菜单里的按钮 */
@@ -1077,7 +1127,7 @@
             .sidebar {
                 top: 0;
                 height: 100vh;
-                padding:102px 12px 12px 12px;
+                padding:102px 8px 12px 12px;
             }
 
             .sidebar-brand{
@@ -1097,7 +1147,8 @@
 
             .chat-messages {
                 width: min(94%, 760px);
-                padding: 18px 12px 118px 12px;
+                padding: 18px 12px 166px 12px;
+                scroll-padding-bottom: 166px;
             }
 
             .input-area,
@@ -1167,7 +1218,7 @@
                 width: 68vw;
                 max-width: 260px;
                 height: 100dvh;
-                padding:94px 10px 68px 10px; 
+                padding:94px 8px 68px 10px; 
                 overflow:hidden; 
             }
 
@@ -1187,8 +1238,7 @@
             }
 
             .sidebar-user-menu{
-                left:10px;
-                bottom:66px;
+                width:112px;
             }
 
             .sidebar.open {
@@ -1214,7 +1264,8 @@
             }
 
             .new-chat-card {
-                padding: 12px;
+                min-height: 44px;
+                padding: 0 10px;
                 font-size: 14px;
             }
 
@@ -1232,14 +1283,13 @@
             }
 
             .history-menu {
-                right: 6px;
-                top: 38px;
                 width: 112px;
             }
 
             .chat-messages {
                 width: 100%;
-                padding: 14px 12px 126px 12px;
+                padding: 14px 12px 150px 12px;
+                scroll-padding-bottom: 150px;
                 gap: 12px;
             }
 
@@ -1288,7 +1338,7 @@
 
             .option-buttons {
                 left: 12px;
-                bottom: 12px;
+                bottom: 10px;
                 gap: 6px;
                 overflow-x: auto;
                 max-width: calc(100% - 92px);
@@ -1306,16 +1356,16 @@
             }
 
             #question-input {
-                min-height: 92px;
-                max-height: 128px;
-                padding: 13px 82px 48px 14px;
+                min-height: 84px;
+                max-height: 116px;
+                padding: 11px 82px 44px 14px;
                 font-size: 14px;
                 border-radius: 24px;
             }
 
             #send-btn {
                 right: 10px;
-                bottom: 12px;
+                bottom: 10px;
                 height: 32px;
                 padding: 0 14px;
                 font-size: 13px;
@@ -1483,6 +1533,29 @@
         </div>
     </div>
 
+    <!-- 重命名历史记录弹窗 -->
+    <div id="rename-modal" class="modal rename-modal hidden">
+        <div class="modal-content">
+            <div class="modal-title">重命名对话</div>
+
+            <div class="form-item">
+                <label for="rename-title-input">新的对话标题</label>
+                <input
+                    type="text"
+                    id="rename-title-input"
+                    placeholder="请输入新的对话标题"
+                    maxlength="50"
+                >
+                <div class="error-msg" id="rename-title-err"></div>
+            </div>
+
+            <div class="modal-btns">
+                <button class="modal-btn cancel-btn" onclick="hideRenameModal()">取消</button>
+                <button class="modal-btn primary-btn" onclick="confirmRenameConversation()">确定</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 登录弹窗 -->
     <div id="login-modal" class="modal hidden">
         <div class="modal-content">
@@ -1549,6 +1622,7 @@
         let currentConversation = [];
         let currentConversationId = "";
         let openedHistoryMenuIndex = null;
+        let renamingHistoryIndex = null;
         const SIDEBAR_WIDTH = 260;
         const MIN_CHAT_WIDTH_AFTER_PUSH = 720;
 
@@ -1637,19 +1711,70 @@
         };
 
         let chatScrollTimer = null;
+        let lockedHistoryScrollTop = 0;
 
         document.addEventListener("DOMContentLoaded", () => {
             const chat = document.getElementById("chat-messages");
-            if (!chat) return;
 
-            chat.addEventListener("scroll", () => {
-                chat.classList.add("scrolling");
+            if (chat) {
+                chat.addEventListener("scroll", () => {
+                    chat.classList.add("scrolling");
 
-                clearTimeout(chatScrollTimer);
-                chatScrollTimer = setTimeout(() => {
-                    chat.classList.remove("scrolling");
-                }, 800);
-            });
+                    clearTimeout(chatScrollTimer);
+                    chatScrollTimer = setTimeout(() => {
+                        chat.classList.remove("scrolling");
+                    }, 800);
+                });
+            }
+
+            const historyScrollArea = document.querySelector(".history-scroll-area");
+
+            if (historyScrollArea) {
+                /*
+                打开历史记录菜单时，禁止鼠标滚轮滚动历史记录。
+                注意：这里不是隐藏滚动条，而是拦截滚动行为。
+                */
+                historyScrollArea.addEventListener("wheel", (event) => {
+                    if (historyScrollArea.classList.contains("scroll-locked")) {
+                        event.preventDefault();
+                    }
+                }, { passive: false });
+
+                /*
+                手机端触摸滑动时也禁止历史记录滚动。
+                */
+                historyScrollArea.addEventListener("touchmove", (event) => {
+                    if (historyScrollArea.classList.contains("scroll-locked")) {
+                        event.preventDefault();
+                    }
+                }, { passive: false });
+
+                /*
+                如果用户拖动滚动条，强制回到打开菜单时的位置。
+                这样既保留滚动条，又不会让菜单和历史记录错位。
+                */
+                historyScrollArea.addEventListener("scroll", () => {
+                    if (historyScrollArea.classList.contains("scroll-locked")) {
+                        historyScrollArea.scrollTop = lockedHistoryScrollTop;
+                    }
+                });
+            }
+
+            const renameInput = document.getElementById("rename-title-input");
+
+            if (renameInput) {
+                renameInput.addEventListener("keydown", (event) => {
+                    if (event.key === "Enter") {
+                        event.preventDefault();
+                        confirmRenameConversation();
+                    }
+
+                    if (event.key === "Escape") {
+                        event.preventDefault();
+                        hideRenameModal();
+                    }
+                });
+            }
         });
 
         function initUserStatus() {
@@ -1741,20 +1866,120 @@
             }
         }
 
+        function setSidebarUserMenuPosition(menu) {
+            const sidebar = document.getElementById("sidebar");
+            const userBtn = document.querySelector(".sidebar-user-btn");
+
+            if (!menu || !userBtn) return;
+
+            const btnRect = userBtn.getBoundingClientRect();
+            const sidebarRect = sidebar
+                ? sidebar.getBoundingClientRect()
+                : { left: 0, right: 260, top: 0, bottom: window.innerHeight };
+
+            const menuWidth = menu.offsetWidth || 118;
+            const menuHeight = menu.offsetHeight || 96;
+
+            /*
+            菜单和个人信息栏之间的距离。
+            数字越小越贴近。
+            */
+            const safeGap = 6;
+
+            /*
+            横向位置：
+            让菜单右边缘和个人信息栏右边缘对齐。
+            这样菜单会贴在个人信息栏上方，而不是跑到侧边栏外面太远。
+            */
+            let menuLeft = btnRect.right - menuWidth;
+
+            /*
+            防止菜单左侧超出侧边栏或屏幕。
+            */
+            menuLeft = Math.max(
+                sidebarRect.left + 12,
+                menuLeft
+            );
+
+            /*
+            防止极窄屏幕下菜单右侧超出屏幕。
+            */
+            if (menuLeft + menuWidth + safeGap > window.innerWidth) {
+                menuLeft = Math.max(
+                    safeGap,
+                    window.innerWidth - menuWidth - safeGap
+                );
+            }
+
+            /*
+            纵向位置：
+            菜单紧贴个人信息栏上方。
+            */
+            let menuTop = btnRect.top - menuHeight - safeGap;
+
+            /*
+            防止菜单跑出屏幕顶部。
+            */
+            menuTop = Math.max(
+                sidebarRect.top + safeGap,
+                menuTop
+            );
+
+            menu.style.left = menuLeft + "px";
+            menu.style.top = menuTop + "px";
+        }
+
         function toggleUserMenu(event) {
             event.stopPropagation();
 
             const menu = document.getElementById("sidebar-user-menu");
             if (!menu) return;
 
-            closeHistoryMenus();
-            menu.classList.toggle("hidden");
+            /*
+            先判断两个菜单当前的状态。
+            注意：必须在 closeHistoryMenus() 之前判断，
+            否则历史记录菜单会先被关掉，后面就不知道它刚才是否打开过了。
+            */
+            const isUserMenuOpen = !menu.classList.contains("hidden");
+
+            const isHistoryMenuOpen =
+                openedHistoryMenuIndex !== null ||
+                !!document.querySelector(".history-menu");
+
+            /*
+            如果历史记录菜单正在打开：
+            点击个人信息栏时，只关闭历史记录菜单，不打开个人信息菜单。
+            */
+            if (isHistoryMenuOpen) {
+                closeHistoryMenus();
+                return;
+            }
+
+            /*
+            如果个人信息菜单自己已经打开：
+            再次点击个人信息栏时，只关闭个人信息菜单。
+            */
+            if (isUserMenuOpen) {
+                closeUserMenu();
+                return;
+            }
+
+            /*
+            没有任何菜单打开时，才正常打开个人信息菜单。
+            */
+            menu.style.visibility = "hidden";
+            menu.classList.remove("hidden");
+
+            setSidebarUserMenuPosition(menu);
+
+            menu.style.visibility = "";
         }
 
         function closeUserMenu() {
             const menu = document.getElementById("sidebar-user-menu");
             if (menu) {
                 menu.classList.add("hidden");
+                menu.style.visibility = "";
             }
         }
 
@@ -2015,6 +2240,171 @@
             }
         }
 
+        function showRenameModal(index) {
+            const data = conversations[index];
+
+            if (!token) {
+                alert("请先登录");
+                return;
+            }
+
+            if (!data || !data.conversationId) {
+                alert("未找到该历史记录");
+                return;
+            }
+
+            renamingHistoryIndex = index;
+
+            const modal = document.getElementById("rename-modal");
+            const input = document.getElementById("rename-title-input");
+            const err = document.getElementById("rename-title-err");
+
+            if (!modal || !input || !err) return;
+
+            err.textContent = "";
+
+            input.value = data.title || "新对话";
+
+            modal.classList.remove("hidden");
+
+            setTimeout(() => {
+                input.focus();
+                input.select();
+            }, 0);
+        }
+
+        function hideRenameModal() {
+            const modal = document.getElementById("rename-modal");
+            const input = document.getElementById("rename-title-input");
+            const err = document.getElementById("rename-title-err");
+
+            if (modal) {
+                modal.classList.add("hidden");
+            }
+
+            if (input) {
+                input.value = "";
+            }
+
+            if (err) {
+                err.textContent = "";
+            }
+
+            renamingHistoryIndex = null;
+
+            /*
+            保持原 prompt 逻辑：
+            用户取消重命名时，关闭历史记录右侧菜单。
+            */
+            closeHistoryMenus();
+        }
+
+        async function confirmRenameConversation() {
+            const index = renamingHistoryIndex;
+            const data = conversations[index];
+
+            const input = document.getElementById("rename-title-input");
+            const err = document.getElementById("rename-title-err");
+
+            if (!input || !err) return;
+
+            if (!token) {
+                alert("请先登录");
+                return;
+            }
+
+            if (!data || !data.conversationId) {
+                err.textContent = "未找到该历史记录";
+                return;
+            }
+
+            const title = input.value.trim();
+
+            if (!title) {
+                err.textContent = "标题不能为空";
+                input.focus();
+                return;
+            }
+
+            if (title.length > 50) {
+                err.textContent = "标题不能超过 50 个字符";
+                input.focus();
+                return;
+            }
+
+            try {
+                const params = new URLSearchParams();
+                params.set("token", token);
+                params.set("conversationId", data.conversationId);
+                params.set("title", title);
+
+                const res = await fetch(`${BASE_URL}/conversation/title?${params.toString()}`, {
+                    method: "POST"
+                });
+
+                if (!res.ok) {
+                    throw new Error(`重命名接口响应失败：${res.status}`);
+                }
+
+                const result = await res.json();
+
+                if (result.code !== 200) {
+                    err.textContent = result.msg || "重命名失败";
+                    return;
+                }
+
+                /*
+                先记录当前历史记录滚动位置。
+                这样重命名完成后，即使重新渲染历史记录列表，
+                也可以把滚动条恢复到原来的位置。
+                */
+                const historyScrollArea = document.querySelector(".history-scroll-area");
+                const keepHistoryScrollTop = historyScrollArea
+                    ? historyScrollArea.scrollTop
+                    : 0;
+
+                const modal = document.getElementById("rename-modal");
+                if (modal) {
+                    modal.classList.add("hidden");
+                }
+
+                renamingHistoryIndex = null;
+
+                closeHistoryMenus();
+
+                // 更新本地标题，避免界面延迟
+                data.title = title;
+
+                // 如果当前打开的就是这个对话，同步更新顶部标题
+                if (data.conversationId === currentConversationId) {
+                    setConversationTitle(title);
+                }
+
+                /*
+                不要在重命名完成后立即 await loadUserHistory();
+                否则后端返回顺序可能变化，或者滚动位置被重置。
+                这里直接用本地 conversations 重新渲染，保持历史记录原有顺序。
+                */
+                renderHistoryList();
+
+                /*
+                恢复历史记录滚动位置。
+                requestAnimationFrame 是为了等 renderHistoryList() 完成 DOM 更新后再恢复。
+                */
+                const newHistoryScrollArea = document.querySelector(".history-scroll-area");
+                if (newHistoryScrollArea) {
+                    newHistoryScrollArea.scrollTop = keepHistoryScrollTop;
+
+                    requestAnimationFrame(() => {
+                        newHistoryScrollArea.scrollTop = keepHistoryScrollTop;
+                    });
+                }
+            } catch (errObj) {
+                console.error("重命名历史记录失败：", errObj);
+                err.textContent = "重命名失败，请稍后重试";
+            }
+        }
+
         function showLoginModal() {
             document.getElementById("login-modal").classList.remove("hidden");
         }
@@ -2229,6 +2619,25 @@
         }
 
         function toggleSidebar(){
+            /*
+            如果历史记录菜单或个人信息菜单正在打开，
+            点击左上角按钮时只关闭菜单，不折叠左侧大折叠栏。
+            */
+            const userMenu = document.getElementById("sidebar-user-menu");
+
+            const isHistoryMenuOpen =
+                openedHistoryMenuIndex !== null ||
+                document.querySelector(".history-menu");
+
+            const isUserMenuOpen =
+                userMenu && !userMenu.classList.contains("hidden");
+
+            if (isHistoryMenuOpen || isUserMenuOpen) {
+                closeHistoryMenus();
+                closeUserMenu();
+                return;
+            }
+
             const sidebar = document.getElementById("sidebar");
 
             sidebar.classList.toggle("open");
@@ -2242,16 +2651,58 @@
         }
 
         document.addEventListener("click", function(event) {
-            // 点击历史菜单、历史三个点、用户菜单、用户按钮时，不关闭菜单
-            if (
-                event.target.closest(".history-menu") ||
-                event.target.closest(".history-more-btn") ||
-                event.target.closest(".sidebar-user-menu") ||
-                event.target.closest(".sidebar-user-btn")
-            ) {
+            const sidebar = document.getElementById("sidebar");
+
+            const clickedHistoryMenu = event.target.closest(".history-menu");
+            const clickedHistoryMoreBtn = event.target.closest(".history-more-btn");
+            const clickedSidebarUserMenu = event.target.closest(".sidebar-user-menu");
+            const clickedSidebarUserBtn = event.target.closest(".sidebar-user-btn");
+
+            const clickedInsideSidebar = sidebar && sidebar.contains(event.target);
+
+            /*
+            1. 点击历史记录右侧弹出的菜单本身：
+            不由全局点击事件关闭。
+            里面的“重命名 / 删除”按钮继续走它们自己的 onclick。
+            */
+            if (clickedHistoryMenu) {
                 return;
             }
 
+            /*
+            2. 点击历史记录右侧三个点按钮：
+            不由全局点击事件处理。
+            因为三个点按钮自己的 onclick 会负责打开 / 切换 / 关闭菜单。
+            */
+            if (clickedHistoryMoreBtn) {
+                return;
+            }
+
+            /*
+            3. 点击左侧用户菜单或用户按钮：
+            保持原来的用户菜单逻辑。
+            toggleUserMenu() 里面已经会 closeHistoryMenus()。
+            */
+            if (clickedSidebarUserMenu || clickedSidebarUserBtn) {
+                return;
+            }
+
+            /*
+            4. 点击左侧大折叠栏内部：
+            允许原本的按钮逻辑先执行。
+            比如点击“新对话”、历史记录项等，它们的 onclick 会正常触发。
+            然后这里负责关闭历史记录右侧菜单。
+            */
+            if (clickedInsideSidebar) {
+                closeHistoryMenus();
+                closeUserMenu();
+                return;
+            }
+
+            /*
+            5. 点击左侧大折叠栏以外的任何地方：
+            只关闭菜单，不触发左侧栏功能。
+            */
             closeHistoryMenus();
             closeUserMenu();
         });
@@ -2299,6 +2750,23 @@
             });
         }
 
+        function lockHistoryScroll() {
+            const historyScrollArea = document.querySelector(".history-scroll-area");
+            if (historyScrollArea) {
+                lockedHistoryScrollTop = historyScrollArea.scrollTop;
+                historyScrollArea.classList.add("scroll-locked");
+            }
+        }
+
+        function unlockHistoryScroll() {
+            const historyScrollArea = document.querySelector(".history-scroll-area");
+            if (historyScrollArea) {
+                historyScrollArea.classList.remove("scroll-locked");
+            }
+
+            lockedHistoryScrollTop = 0;
+        }
+
         function closeHistoryMenus() {
             openedHistoryMenuIndex = null;
 
@@ -2309,22 +2777,159 @@
             document.querySelectorAll(".history-record.menu-open").forEach(record => {
                 record.classList.remove("menu-open");
             });
+
+            // 菜单关闭后，恢复历史记录滚动
+            unlockHistoryScroll();
+        }
+
+        function setHistoryMenuDirection(recordEl, menu) {
+            const sidebar = document.getElementById("sidebar");
+            const userArea = document.querySelector(".sidebar-user-area");
+            const scrollArea = recordEl.closest(".history-scroll-area");
+            const moreBtn = recordEl.querySelector(".history-more-btn");
+
+            const recordRect = recordEl.getBoundingClientRect();
+            const btnRect = moreBtn
+                ? moreBtn.getBoundingClientRect()
+                : recordRect;
+
+            const sidebarRect = sidebar
+                ? sidebar.getBoundingClientRect()
+                : { left: 0, right: 260, top: 0, bottom: window.innerHeight };
+
+            const userAreaRect = userArea
+                ? userArea.getBoundingClientRect()
+                : null;
+
+            const scrollAreaRect = scrollArea
+                ? scrollArea.getBoundingClientRect()
+                : null;
+
+            const menuWidth = menu.offsetWidth || 118;
+            const menuHeight = menu.offsetHeight || 104;
+            const safeGap = 8;
+
+            /*
+            菜单横向位置：
+            让菜单左边缘与历史记录右侧三个点按钮的左边缘对齐。
+            这样菜单会贴近按钮展开，而不是从侧边栏右边界外侧再展开。
+            */
+            let menuLeft = btnRect.left;
+
+            /*
+            兜底处理：
+            如果窗口太窄导致菜单右侧超出屏幕，才轻微向左收回。
+            正常电脑端和手机端宽度足够时，不会影响“左边缘对齐”的效果。
+            */
+            if (menuLeft + menuWidth + safeGap > window.innerWidth) {
+                menuLeft = Math.max(
+                    safeGap,
+                    window.innerWidth - menuWidth - safeGap
+                );
+            }
+            /*
+            底部边界：
+            不能被底部个人信息栏挡住；
+            也不能超过历史记录滚动区域和窗口底部。
+            */
+            const bottomLimit = Math.min(
+                userAreaRect ? userAreaRect.top : window.innerHeight,
+                scrollAreaRect ? scrollAreaRect.bottom : window.innerHeight,
+                window.innerHeight - safeGap
+            );
+
+            /*
+            顶部边界：
+            防止菜单向上展开时跑出折叠栏顶部。
+            */
+            const topLimit = Math.max(
+                scrollAreaRect ? scrollAreaRect.top : sidebarRect.top,
+                sidebarRect.top,
+                safeGap
+            );
+
+            /*
+            向下展开时：菜单出现在按钮右下方。
+            向上展开时：菜单出现在按钮右上方。
+            */
+            const downTop = btnRect.bottom + safeGap;
+            const upTop = btnRect.top - menuHeight - safeGap;
+
+            const enoughBelow = downTop + menuHeight <= bottomLimit;
+            const enoughAbove = upTop >= topLimit;
+
+            menu.classList.remove("drop-down", "drop-up");
+
+            if (!enoughBelow && enoughAbove) {
+                menu.classList.add("drop-up");
+                menu.style.left = menuLeft + "px";
+                menu.style.top = upTop + "px";
+            } else {
+                menu.classList.add("drop-down");
+                menu.style.left = menuLeft + "px";
+
+                /*
+                如果下方空间不够、上方也不够，就尽量贴在可见区域内，
+                避免菜单被个人信息栏或窗口底部遮挡。
+                */
+                const fixedDownTop = Math.min(
+                    downTop,
+                    bottomLimit - menuHeight
+                );
+
+                menu.style.top = Math.max(topLimit, fixedDownTop) + "px";
+            }
         }
 
         function toggleHistoryMenu(index, recordEl) {
-            // 如果当前点的是已经打开的菜单，则关闭
-            if (openedHistoryMenuIndex === index) {
+            const userMenu = document.getElementById("sidebar-user-menu");
+
+            /*
+            先判断两个菜单当前的状态。
+            注意：必须在 closeUserMenu() / closeHistoryMenus() 之前判断。
+            */
+            const isUserMenuOpen =
+                userMenu && !userMenu.classList.contains("hidden");
+
+            const isHistoryMenuOpen =
+                openedHistoryMenuIndex !== null ||
+                !!document.querySelector(".history-menu");
+
+            /*
+            如果个人信息菜单正在打开：
+            点击历史记录右侧按钮时，只关闭个人信息菜单，不打开历史记录菜单。
+            */
+            if (isUserMenuOpen) {
+                closeUserMenu();
+                return;
+            }
+
+            /*
+            如果历史记录菜单已经打开：
+            再点击任意历史记录右侧按钮时，只关闭当前历史记录菜单。
+            不立即切换打开新的历史记录菜单。
+            */
+            if (isHistoryMenuOpen) {
                 closeHistoryMenus();
                 return;
             }
 
-            closeHistoryMenus();
-
+            /*
+            没有任何菜单打开时，才正常打开历史记录菜单。
+            */
             openedHistoryMenuIndex = index;
             recordEl.classList.add("menu-open");
 
+            lockHistoryScroll();
+
             const menu = document.createElement("div");
             menu.className = "history-menu";
+
+            /*
+            先隐藏，等计算完位置后再显示。
+            避免菜单先出现在错误位置，然后再跳动。
+            */
+            menu.style.visibility = "hidden";
 
             // 防止点击菜单时触发打开对话
             menu.onclick = (event) => {
@@ -2352,71 +2957,20 @@
             menu.appendChild(renameBtn);
             menu.appendChild(deleteBtn);
 
-            recordEl.appendChild(menu);
+            /*
+            不 append 到 recordEl 里面，
+            而是 append 到 body 上，让它变成真正的浮层菜单。
+            */
+            document.body.appendChild(menu);
+
+            // 根据当前历史记录按钮的位置，决定菜单向右下还是右上展开
+            setHistoryMenuDirection(recordEl, menu);
+
+            menu.style.visibility = "";
         }
 
-        async function renameHistoryConversation(index) {
-            const data = conversations[index];
-
-            if (!token) {
-                alert("请先登录");
-                return;
-            }
-
-            if (!data || !data.conversationId) {
-                alert("未找到该历史记录");
-                return;
-            }
-
-            const oldTitle = data.title || "新对话";
-            const newTitle = prompt("请输入新的对话标题", oldTitle);
-
-            // 用户点取消
-            if (newTitle === null) {
-                closeHistoryMenus();
-                return;
-            }
-
-            const title = newTitle.trim();
-
-            if (!title) {
-                alert("标题不能为空");
-                return;
-            }
-
-            try {
-                const params = new URLSearchParams();
-                params.set("token", token);
-                params.set("conversationId", data.conversationId);
-                params.set("title", title);
-
-                const res = await fetch(`${BASE_URL}/conversation/title?${params.toString()}`, {
-                    method: "POST"
-                });
-
-                if (!res.ok) {
-                    throw new Error(`重命名接口响应失败：${res.status}`);
-                }
-
-                const result = await res.json();
-
-                if (result.code !== 200) {
-                    alert(result.msg || "重命名失败");
-                    return;
-                }
-
-                closeHistoryMenus();
-
-                // 更新本地标题，避免界面延迟
-                data.title = title;
-
-                // 重新拉取历史列表，保证和后端一致
-                await loadUserHistory();
-
-            } catch (err) {
-                console.error("重命名历史记录失败：", err);
-                alert("重命名失败，请稍后重试");
-            }
+        function renameHistoryConversation(index) {
+            showRenameModal(index);
         }
 
         async function deleteHistoryConversation(index) {
