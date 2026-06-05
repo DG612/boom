@@ -1,2582 +1,991 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>华南理工校园百事通</title>
-    <style>
-        * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: system-ui, -apple-system, sans-serif;
-        }
-
-        body {
-            padding: 0;
-            background: #2a2a2a;
-            color: #e0e0e0;
-            overflow: hidden;
-        }
-
-        .chat-container {
-            width: 100vw;
-            height: 100vh;
-            background: #1e1e1e;
-            color: #e0e0e0;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: fixed;
-            top: 0;
-            left: 0;
-            transition: left 0.3s ease, width 0.3s ease;
-        }
-
-        .chat-header {
-            height:72px;
-            padding: 16px 20px;
-            background: #1e1e1e;
-            border-bottom: 1px solid #444;
-            color: #fff;
-            font-size: 18px;
-            font-weight: bold;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-        }
-
-        .chat-header > span {
-            position:absolute;
-            left:50%;
-            transform:translateX(-50%);
-        }
-
-        .user-info {
-            position:absolute;
-            right:16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .health-status {
-            font-size: 14px;
-            padding: 4px 10px;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .chat-messages {
-            flex: 1;
-            width: min(92%, 860px);
-            margin: 0 auto;
-            padding: 20px 16px 170px 16px;
-            scroll-padding-bottom: 170px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-
-            /* Firefox：默认细滚动条，不彻底隐藏 */
-            scrollbar-width: thin;
-            scrollbar-color: transparent transparent;
-        }
-
-        /* Firefox：鼠标悬停或滚动时显示 */
-        .chat-messages:hover,
-        .chat-messages.scrolling{
-            scrollbar-color: #555 transparent;
-        }
-
-        /* Chrome / Edge / Safari */
-        .chat-messages::-webkit-scrollbar{
-            width: 6px;
-        }
-
-        .chat-messages::-webkit-scrollbar-track{
-            background: transparent;
-        }
-
-        .chat-messages::-webkit-scrollbar-thumb{
-            background: rgba(85,85,85,0);
-            border-radius: 3px;
-        }
-
-        /* 鼠标放到对话区域时显示 */
-        .chat-messages:hover::-webkit-scrollbar-thumb{
-            background: #555;
-        }
-
-        /* 正在滚动时显示 */
-        .chat-messages.scrolling::-webkit-scrollbar-thumb{
-            background: #555;
-        }
-
-        .message {
-            max-width: 85%;
-            display: flex;
-        }
-
-        .ai-message {
-            align-self: flex-start;
-        }
-
-        .user-message {
-            align-self: flex-end;
-            flex-direction: row-reverse;
-        }
-
-        .bubble {
-            padding: 12px 16px;
-            border-radius: 18px;
-            line-height: 1.6;
-            word-wrap: break-word;
-        }
-
-        .ai-message .bubble {
-            background: #f1f3f4;
-            color: #e0e0e0;
-            border-bottom-left-radius: 6px;
-        }
-
-        .user-message .bubble {
-            background: #3a3a3a;
-            color: #fff;
-            border-bottom-right-radius: 6px;
-        }
-
-        .greeting-text{
-            position:absolute;
-            left:50%;
-            top:calc(50% - 130px);
-            transform:translateX(-50%);
-            width:min(92%, 780px);
-            text-align:center;
-            color:#f0f0f0;
-            font-size:24px;
-            font-weight:700;
-            line-height:1.4;
-            z-index:5;
-            pointer-events:none;
-        }
-
-        .chat-container.chat-active .greeting-text{
-            display:none;
-        }
-
-        .chat-container:not(.start-mode) .greeting-text{
-            display:none;
-        }
-
-        .input-area {
-            position: absolute;
-            left: 50%;
-            bottom: 16px;
-            transform: translateX(-50%);
-            width: min(92%, 780px);
-            padding: 0;
-            border: none;
-            border-radius: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            gap: 6px;
-            background: transparent;
-            box-shadow: none;
-        }
-
-        /* 初始状态：输入框居中 */
-        .chat-container.start-mode .input-area{
-            top:50%;
-            bottom:auto;
-            transform:translate(-50%,-50%);
-            width:min(92%, 780px);
-        }
-
-        .chat-container.chat-active .input-area {
-            animation: inputDropDown 0.35s ease forwards;
-        }
-
-        @keyframes inputDropDown {
-            from {
-                top: 50%;
-                bottom: auto;
-                transform: translate(-50%, -50%);
-            }
-            to {
-                top: auto;
-                bottom: 16px;
-                transform: translateX(-50%);
-            }
-        }
-
-        @media (max-width: 600px) {
-            @keyframes inputDropDown {
-                from {
-                    top: 50%;
-                    bottom: auto;
-                    transform: translate(-50%, -50%);
-                }
-                to {
-                    top: auto;
-                    bottom: 10px;
-                    transform: translateX(-50%);
-                }
-            }
-        }
-
-        /* 初始状态隐藏消息区 */
-        .chat-container.start-mode .chat-messages{
-            display:none;
-        }
-
-        .input-wrapper {
-            position: relative;
-            width: 100%;
-        }
-
-        #question-input {
-            width: 100%;
-            padding: 16px 100px 52px 18px; 
-            background: #2a2a2a;
-            color: #e0e0e0;
-            border: 1px solid #555;
-            border-radius: 28px;
-            resize: none;
-            min-height: 118px;
-            max-height: min(200px, 50vh);
-            outline: none;
-            font-size: clamp(14px, 1.6vw, 16px);
-            line-height: 1.7;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            display: block;
-        }
-
-        #question-input:focus {
-            border-color: #888;
-            box-shadow: 0 0 0 1px rgba(255,255,255,0.12);
-        }
-
-        .option-buttons {
-            position: absolute;
-            left: 14px;
-            bottom: 12px;
-            display: flex;
-            gap: 8px;
-            justify-content: flex-start;
-            z-index: 2;
-        }
-
-        .option-btn {
-            padding: 7px 12px;
-            border-radius: 24px;
-            border: 1px solid #555;
-            background: #2a2a2a;
-            color: #e0e0e0;
-            cursor: pointer;
-            font-size: clamp(12px, 1.5vw, 13px);
-            line-height: 1;
-            transition: background 0.2s, border-color 0.2s;
-            white-space: nowrap;
-        }
-
-        .option-btn.active {
-            background: #444;
-            border-color: #aaa;
-            color: #fff;
-        }
-
-        .option-btn:hover {
-            border-color: #999;
-            background: #3a3a3a;
-        }
-
-        .admin-hidden {
-            display: none;
-        }
-
-        #send-btn {
-            position: absolute;
-            right: 12px;
-            bottom: 12px;
-            height: 36px;
-            padding: 0 20px;
-            background: #ffffff;
-            color: #000000;
-            border: none;
-            border-radius: 18px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: background 0.2s, transform 0.2s;
-        }
-
-        #send-btn:hover {
-            background: #f0f0f0;
-        }
-
-        #send-btn:disabled {
-            background: #bdbdbd;
-            color: #555;
-            cursor: not-allowed;
-        }
-
-        .loading {
-            color: #999;
-            font-size: 14px;
-            padding: 8px 16px;
-        }
-
-        /* 顶部自定义提示气泡 */
-        .toast-message {
-            position: fixed;
-            top: 28px;
-            left: 50%;
-            transform: translate(-50%, -12px);
-            padding: 10px 18px;
-            background: rgba(70, 70, 70, 0.96);
-            color: #ffffff;
-            font-size: 14px;
-            border-radius: 999px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.28);
-            opacity: 0;
-            pointer-events: none;
-            z-index: 3000;
-            transition: opacity 0.25s ease, transform 0.25s ease;
-            white-space: nowrap;
-        }
-
-        .toast-message.show {
-            opacity: 1;
-            transform: translate(-50%, 0);
-        }
-
-        /* 登录注册弹窗样式 */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        /* 重命名弹窗：层级高于历史记录右侧菜单 */
-        .rename-modal {
-            z-index: 2500;
-        }
-
-        /* 重命名输入框聚焦效果，和主输入框风格统一 */
-        #rename-title-input:focus {
-            outline: none;
-            box-shadow: 0 0 0 1px rgba(255,255,255,0.16);
-        }
-
-        /* 重命名弹窗按钮稍微紧凑一点 */
-        .rename-modal .modal-content {
-            max-width: 420px;
-        }
-
-        .modal-content {
-            background: #1f1f1f;
-            color: #e0e0e0;
-            padding: 24px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
-        }
-
-        .modal-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .form-item {
-            margin-bottom: 16px;
-        }
-
-        .form-item label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 14px;
-            color: #bdbdbd;
-        }
-
-        .form-item input {
-            width: 100%;
-            padding: 10px 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            background: #3a3a3a;
-            color: #e0e0e0;
-        }
-
-        .form-item input::placeholder {
-            color: #b0b0b0;
-        }
-
-        .modal-btns {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .modal-btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-
-        .primary-btn {
-            background: #555;
-            color: #fff;
-        }
-
-        .primary-btn:hover {
-            background: #666;
-        }
-
-        .cancel-btn {
-            background: #e6e6e6;
-            color: #000;
-        }
-
-        .cancel-btn:hover {
-            background: #f2f2f2;
-        }
-
-        .register-link {
-            margin-top: 12px;
-            text-align: right;
-        }
-
-        .register-link span {
-            display: inline-block;
-            font-size: 13px;
-            color: #999;
-            cursor: pointer;
-            padding: 2px 4px;
-        }
-
-        .register-link span:hover {
-            color: #d0d0d0;
-        }
-
-        .login-link {
-            margin-top: 12px;
-            text-align: right;
-        }
-
-        .login-link span {
-            display: inline-block;
-            font-size: 13px;
-            color: #999;
-            cursor: pointer;
-            padding: 2px 4px;
-        }
-
-        .login-link span:hover {
-            color: #d0d0d0;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .error-msg {
-            color: #f56c6c;
-            font-size: 12px;
-            margin-top: 4px;
-        }
-
-        .history-btn {
-            padding: 4px 8px;
-            font-size: 12px;
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-left: 8px;
-        }
-
-        /* 左上角菜单按钮 */
-        .sidebar-toggle{
-            position:fixed;
-            left:0;
-            top:0;
-            width:64px;
-            height:72px;
-            border:none;
-            border-bottom:1px solid #444;
-            background: #1e1e1e;
-            color: #fff;
-            font-size:24px;
-            cursor:pointer;
-            z-index:300;
-            transition:left 0.3s ease;
-        }
-
-        body.sidebar-open .sidebar-toggle{
-            left:260px;
-        }
-
-        /* 左侧折叠栏：默认隐藏 */
-        .sidebar{
-            position:fixed;
-            left:-260px;
-            top:0; 
-            width:260px;
-            height:100vh;
-            background: #1f1f1f;
-            color: #e0e0e0;
-            border-right:1px solid #444;
-            transition:left 0.3s ease, box-shadow 0.3s ease;
-            z-index:200;
-            padding:100px 8px 12px 12px;
-            overflow-y:hidden;
-            box-shadow:none;
-        }
-
-        /* 展开时显示 */
-        .sidebar.open{
-            left:0;
-            box-shadow: 6px 0 18px rgba(0,0,0,0.28);
-        }
-
-        /* 左侧折叠栏左上角 Logo */
-        .sidebar-brand{
-            position: absolute;
-            top: 6px;
-            left: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            min-height: 58px;
-            padding: 6px 8px;
-            background: #1f1f1f;
-            border-radius: 10px;
-            z-index: 1;
-        }
-
-        .sidebar-brand img{
-            display: block;
-            height: 60px; 
-            width: auto;
-            max-width: 190px;
-            object-fit: contain;
-            border: none;
-            filter:
-                brightness(1.18)
-                contrast(1.22)
-                drop-shadow(0 0 1px rgba(255,255,255,0.55))
-                drop-shadow(0 2px 8px rgba(255,255,255,0.08));
-        }
-
-        .sidebar-content{
-            height:100%;
-            padding:0 8px 82px 0;
-            overflow:hidden;
-            display:flex;
-            flex-direction:column;
-        }
-
-        /* 默认隐藏滚动条 */
-        .sidebar-content::-webkit-scrollbar{
-            width:6px;
-            opacity:0;
-            transition: opacity 0.3s;
-        }
-
-        /* 鼠标悬停或滚动时显示滚动条 */
-        .sidebar-content:hover::-webkit-scrollbar,
-        .sidebar-content:active::-webkit-scrollbar{
-            opacity:1;
-        }
-
-        .sidebar-content::-webkit-scrollbar-track{
-            background:transparent;
-        }
-
-        .sidebar-content::-webkit-scrollbar-thumb{
-            background:#555;
-            border-radius:3px;
-        }
-
-        /* 左侧折叠栏底部用户区域 */
-        .sidebar-user-area{
-            position:absolute;
-            left:0;
-            bottom:0;
-            width:100%;
-            height:72px;
-            border-top:1px solid #444;
-            background:#1f1f1f;
-            padding:10px 12px;
-            z-index:20;
-        }
-
-        /* 用户按钮整体 */
-        .sidebar-user-btn{
-            width:100%;
-            height:52px;
-            border:none;
-            background:transparent;
-            color:#e0e0e0;
-            border-radius:10px;
-            display:flex;
-            align-items:center;
-            gap:10px;
-            padding:0 10px;
-            cursor:pointer;
-            text-align:left;
-        }
-
-        .sidebar-user-btn:hover{
-            background:#2a2a2a;
-        }
-
-        /* 圆形头像 */
-        .sidebar-user-avatar{
-            width:34px;
-            height:34px;
-            border-radius:50%;
-            background:#3a3a3a;
-            color:#fff;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:15px;
-            font-weight:700;
-            flex-shrink:0;
-        }
-
-        /* 用户名 */
-        .sidebar-user-name{
-            flex:1;
-            font-size:14px;
-            color:#f0f0f0;
-            overflow:hidden;
-            white-space:nowrap;
-            text-overflow:ellipsis;
-        }
-
-        /* 用户菜单 */
-        .sidebar-user-menu{
-            position:fixed;
-            width:118px;
-            padding:6px;
-            background:#2f2f2f;
-            border:1px solid #444;
-            border-radius:10px;
-            box-shadow:0 8px 24px rgba(0,0,0,0.35);
-            z-index:1200;
-            transform-origin:left bottom;
-        }
-
-        .sidebar-user-menu-item{
-            width:100%;
-            padding:9px 10px;
-            border:none;
-            border-radius:8px;
-            background:transparent;
-            color:#e0e0e0;
-            font-size:14px;
-            text-align:left;
-            cursor:pointer;
-        }
-
-        .sidebar-user-menu-item:hover{
-            background:#444;
-        }
-
-        .sidebar-user-menu-item.danger {
-            color:#ff6b6b;
-        }
-
-        .sidebar-user-menu-item.danger:hover {
-            background:rgba(255,80,80,0.15);
-        }
-
-        /* 个人信息页面 */
-        .profile-page{
-            flex:1;
-            background:#1e1e1e;
-            color:#e0e0e0;
-            display:none;
-            justify-content:center;
-            align-items:center;
-            padding:24px;
-        }
-
-        .profile-card{
-            width:min(92%, 420px);
-            background:#242424;
-            border:1px solid #444;
-            border-radius:18px;
-            padding:28px 24px;
-            text-align:center;
-        }
-
-        .profile-avatar{
-            width:76px;
-            height:76px;
-            border-radius:50%;
-            background:#3a3a3a;
-            color:#fff;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:30px;
-            font-weight:800;
-            margin:0 auto 16px auto;
-        }
-
-        .profile-name{
-            font-size:20px;
-            font-weight:700;
-            margin-bottom:10px;
-        }
-
-        .profile-info{
-            font-size:14px;
-            color:#bdbdbd;
-            line-height:1.8;
-        }
-
-        .new-chat-card{
-            width: calc(100% - 8px);
-            min-height:48px;
-            padding:0 12px;
-            border:1px solid #444;
-            border-radius:8px;
-            cursor:pointer;
-            margin-bottom:10px;
-            background:#2a2a2a;
-            color:#e0e0e0;
-            flex-shrink:0;
-            display:flex;
-            align-items:center;
-        }
-
-        .new-chat-card:hover{
-            background: #3b3b3b;
-        }
-
-        .history-label{
-            font-size:13px;
-            color:#999;
-            margin:6px 0 4px 4px;
-            flex-shrink:0;
-        }
-
-        .history-scroll-area{
-            flex:1;
-            overflow-y:auto;
-            padding-right:8px;
-            margin-right:-8px;
-            scrollbar-gutter: stable;
-        }
-
-        /* 打开历史记录操作菜单时，禁止历史记录区域滚动 */
-        .history-scroll-area.scroll-locked{
-            overflow-y:scroll;
-        }
-
-        .history-scroll-area::-webkit-scrollbar{
-            width:6px;
-        }
-
-        .history-scroll-area::-webkit-scrollbar-track{
-            background:transparent;
-        }
-
-        .history-scroll-area::-webkit-scrollbar-thumb{
-            background:#555;
-            border-radius:3px;
-        }
-
-        .history-records{
-            display:flex;
-            flex-direction:column;
-            gap:8px;
-            width:100%;
-        }
-
-        .history-record{
-            position: relative;
-            width:100%;
-            padding:12px 42px 12px 12px;
-            background:transparent;
-            border:none;
-            color:#e0e0e0;
-            border-radius:8px;
-            cursor:pointer;
-            overflow: visible;
-            display:flex;
-            align-items:center;
-            min-height:48px;
-            box-shadow:none;
-            transition: background 0.2s, box-shadow 0.2s;
-        }
-
-        /* 历史记录标题文字 */
-        .history-record-title{
-            flex: 1;
-            overflow:hidden;
-            white-space:nowrap;
-            text-overflow:ellipsis;
-        }
-
-        /* 鼠标放到历史记录上时，背景提亮 */
-        .history-record:hover{
-            background: #3b3b3b;
-            box-shadow:0 8px 18px rgba(0,0,0,0.22);
-        }
-
-        /* 当前选中的历史记录：提亮灰色 */
-        .history-record.selected {
-            background: #3f3f3f;
-            border-color: #555;
-            color: #fff;
-            box-shadow:0 8px 18px rgba(0,0,0,0.24);
-        }
-
-        /* 选中状态下 hover：继续保持灰色提亮 */
-        .history-record.selected:hover {
-            background: #4a4a4a;
-            border-color: #666;
-            box-shadow:0 10px 22px rgba(0,0,0,0.28);
-        }
-
-        /* 历史记录右侧三个点按钮 */
-        .history-more-btn{
-            position:absolute;
-            right:8px;
-            top:50%;
-            transform:translateY(-50%);
-            width:26px;
-            height:26px;
-            border:none;
-            border-radius:6px;
-            background: transparent;
-            color:#d0d0d0;
-            cursor:pointer;
-            font-size:18px;
-            line-height:26px;
-            opacity:0;
-            transition: background 0.2s, opacity 0.2s;
-        }
-
-        /* 鼠标放到历史记录上时显示右侧按钮 */
-        .history-record:hover .history-more-btn{
-            opacity:1;
-        }
-
-        /* 鼠标放到右侧按钮上时，按钮提亮 */
-        .history-more-btn:hover{
-            background: rgba(255,255,255,0.15);
-        }
-
-        /* 当前打开菜单时，让三个点按钮保持显示 */
-        .history-record.menu-open .history-more-btn{
-            opacity:1;
-            background: rgba(255,255,255,0.15);
-        }
-
-        /* 打开历史记录右侧菜单时，当前历史记录框保持阴影 */
-        .history-record.menu-open{
-            background:#3f3f3f;
-            box-shadow:0 10px 22px rgba(0,0,0,0.28);
-        }
-
-        /* 历史记录操作菜单 */
-        .history-menu{
-            position:fixed;
-            width:118px;
-            padding:6px;
-            background:#2f2f2f;
-            border:1px solid #444;
-            border-radius:10px;
-            box-shadow:0 8px 24px rgba(0,0,0,0.35);
-            z-index:1200;
-        }
-
-        /* 向右下方展开时，动画原点在左上角 */
-        .history-menu.drop-down{
-            transform-origin:left top;
-        }
-
-        /* 向右上方展开时，动画原点在左下角 */
-        .history-menu.drop-up{
-            transform-origin:left bottom;
-        }
-
-        /* 菜单里的按钮 */
-        .history-menu-item{
-            width:100%;
-            padding:9px 10px;
-            border:none;
-            border-radius:8px;
-            background:transparent;
-            color:#e0e0e0;
-            font-size:14px;
-            text-align:left;
-            cursor:pointer;
-        }
-
-        /* 菜单按钮 hover */
-        .history-menu-item:hover{
-            background:#444;
-        }
-
-        /* 删除按钮红色 */
-        .history-menu-item.danger{
-            color:#ff6b6b;
-        }
-
-        .history-menu-item.danger:hover{
-            background:rgba(255,80,80,0.15);
-        }
-
-        /* 主页面默认占满整个窗口 */
-        .chat-container{
-            left:0;
-            width:100vw;
-        }
-
-        /* 
-        当侧边栏展开且窗口宽度足够时：
-        主对话区向右移动一个侧边栏宽度，并缩小宽度，避免被挤出屏幕
-        */
-        body.sidebar-open.sidebar-push .chat-container{
-            left:260px;
-            width:calc(100vw - 260px);
-        }
-
-        /* 
-        标题始终相对于当前 chat-container 居中。
-        max-width 防止标题和右侧登录/状态按钮重叠。
-        */
-        .chat-header > span {
-            max-width: calc(100% - 260px);
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-        }
-
-        /* 隐藏AI回答气泡背景 */
-        .ai-message .bubble.no-bg {
-            background: none;
-            border-radius: 0;
-            padding: 0;
-            color: #e0e0e0;
-        }
-
-        .ai-message .bubble.no-bg .markdown {
-            font-size: 15px;
-            line-height: 1.75;
-            margin-bottom: 4px;
-            word-break: break-word;
-        }
-
-        /* 一级标题 */
-        .ai-message .bubble.no-bg .markdown h1 {
-            font-size: 20px;
-            font-weight: 700;
-            margin: 16px 0 10px 0;
-            line-height: 1.5;
-        }
-
-        /* 二级标题 */
-        .ai-message .bubble.no-bg .markdown h2 {
-            font-size: 18px;
-            font-weight: 700;
-            margin: 14px 0 8px 0;
-            line-height: 1.5;
-        }
-
-        /* 三级标题 */
-        .ai-message .bubble.no-bg .markdown h3 {
-            font-size: 16px;
-            font-weight: 700;
-            margin: 12px 0 6px 0;
-            line-height: 1.5;
-        }
-
-        /* 四级标题 */
-        .ai-message .bubble.no-bg .markdown h4 {
-            font-size: 15px;
-            font-weight: 600;
-            margin: 10px 0 5px 0;
-            line-height: 1.4;
-        }
-
-        /* Markdown 分割线 */
-        .ai-message .bubble.no-bg .markdown hr {
-            border: none;
-            height: 1px;
-            background: rgba(255, 255, 255, 0.18);
-            margin: 16px 0;
-        }
-
-        /* 普通段落 */
-        .ai-message .bubble.no-bg .markdown p {
-            margin: 6px 0;
-        }
-
-        /* 无序列表 */
-        .ai-message .bubble.no-bg .markdown ul {
-            padding-left: 22px;
-            margin: 8px 0;
-        }
-
-        /* 有序列表 */
-        .ai-message .bubble.no-bg .markdown ol {
-            padding-left: 24px;
-            margin: 8px 0;
-        }
-
-        /* 列表项 */
-        .ai-message .bubble.no-bg .markdown li {
-            margin: 5px 0;
-            line-height: 1.7;
-        }
-
-        /* 引用块，比如 > 提示 */
-        .ai-message .bubble.no-bg .markdown blockquote {
-            margin: 10px 0;
-            padding: 8px 12px;
-            border-left: 3px solid #777;
-            background: rgba(255,255,255,0.05);
-            color: #cfcfcf;
-            border-radius: 6px;
-        }
-
-        /* 加粗 */
-        .ai-message .bubble.no-bg .markdown strong {
-            font-weight: 700;
-            color: #f0f0f0;
-        }
-
-        /* 斜体 */
-        .ai-message .bubble.no-bg .markdown em {
-            font-style: italic;
-            color: #d8d8d8;
-        }
-
-        /* 百事通后缀显示在右下角，灰色小字 */
-        .bubble-suffix {
-            font-size: 12px;
-            color: #999;
-            text-align: right;
-            margin-top: 4px;
-        }
-
-        /* =========================
-        响应式适配：平板和小屏电脑
-        ========================= */
-        @media (max-width: 900px) {
-            .chat-header {
-                height: 64px;
-                padding: 12px 14px 12px 64px;
-                font-size: 16px;
-            }
-
-            .chat-header > span {
-                max-width: 48vw;
-                overflow: hidden;
-                white-space: nowrap;
-                text-overflow: ellipsis;
-            }
-
-            .user-info {
-                right: 12px;
-                gap: 6px;
-            }
-
-            .health-status {
-                font-size: 12px;
-                padding: 4px 8px;
-            }
-
-            .history-btn {
-                font-size: 12px;
-                padding: 4px 7px;
-                margin-left: 4px;
-            }
-
-            .sidebar-toggle {
-                width: 56px;
-                height: 64px;
-                font-size: 22px;
-            }
-
-            .sidebar {
-                top: 0;
-                height: 100vh;
-                padding:102px 8px 12px 12px;
-            }
-
-            .sidebar-brand{
-                top: 12px;
-                left: 12px;
-                min-height: 52px;
-                padding: 5px 7px;
-            }
-
-            .sidebar-brand img{
-                height: 44px;
-                max-width: 172px;
-            }
-            body.sidebar-open .sidebar-toggle{
-                left:260px;
-            }
-
-            .chat-messages {
-                width: min(94%, 760px);
-                padding: 18px 12px 166px 12px;
-                scroll-padding-bottom: 166px;
-            }
-
-            .input-area,
-            .chat-container.start-mode .input-area {
-                width: min(94%, 720px);
-            }
-        }
-
-        /* =========================
-        响应式适配：手机端
-        ========================= */
-        @media (max-width: 600px) {
-            .chat-container {
-                width: 100vw;
-                height: 100dvh;
-            }
-
-            body.sidebar-open.sidebar-push .chat-container {
-                left: 0;
-                width: 100vw;
-            }
-
-            .chat-header {
-                height: 58px;
-                padding: 8px 52px 8px 52px;
-                justify-content: center;
-            }
-
-            .chat-header > span {
-                position: absolute;
-                left: 50%;
-                transform: translateX(-50%);
-                font-size: 15px;
-                max-width: 60%;   
-                overflow: hidden;
-                white-space: nowrap;
-                text-overflow: ellipsis;
-            }
-
-            .user-info {
-                right: 8px;
-                gap: 4px;
-            }
-
-            .health-status {
-                display: none;
-            }
-
-            .history-btn {
-                font-size: 11px;
-                padding: 5px 7px;
-                border-radius: 8px;
-                margin-left: 2px;
-            }
-
-            .sidebar-toggle {
-                width: 46px;
-                height: 58px;
-                font-size: 20px;
-                background: #1e1e1e;
-                border-bottom: 1px solid #444;
-            }
-
-            .sidebar {
-                top: 0;
-                left: -68vw;
-                width: 68vw;
-                max-width: 260px;
-                height: 100dvh;
-                padding:94px 8px 68px 10px; 
-                overflow:hidden; 
-            }
-
-            .sidebar-user-area{
-                height:68px;
-                padding:9px 10px;
-            }
-
-            .sidebar-user-btn{
-                height:50px;
-            }
-
-            .sidebar-user-avatar{
-                width:32px;
-                height:32px;
-                font-size:14px;
-            }
-
-            .sidebar-user-menu{
-                width:112px;
-            }
-
-            .sidebar.open {
-                left: 0;
-            }
-
-            .sidebar-brand{
-                top: 10px;
-                left: 10px;
-                min-height: 46px;
-                padding: 4px 6px;
-            }
-
-            .sidebar-brand img{
-                height: 38px;
-                max-width: 150px;
-            }
-
-            body.sidebar-open .sidebar-toggle{
-                left: min(68vw, 260px);
-                background: #1e1e1e;
-                border-bottom: 1px solid #444;
-            }
-
-            .new-chat-card {
-                min-height: 44px;
-                padding: 0 10px;
-                font-size: 14px;
-            }
-
-            .history-record {
-                min-height: 44px;
-                padding: 10px 40px 10px 10px;
-                font-size: 14px;
-            }
-
-            .history-more-btn {
-                opacity: 1;
-                width: 28px;
-                height: 28px;
-                line-height: 28px;
-            }
-
-            .history-menu {
-                width: 112px;
-            }
-
-            .chat-messages {
-                width: 100%;
-                padding: 14px 12px 150px 12px;
-                scroll-padding-bottom: 150px;
-                gap: 12px;
-            }
-
-            .message {
-                max-width: 92%;
-            }
-
-            .bubble {
-                padding: 10px 13px;
-                border-radius: 16px;
-                font-size: 14px;
-                line-height: 1.65;
-            }
-
-            .ai-message .bubble.no-bg .markdown {
-                font-size: 14px;
-                line-height: 1.75;
-            }
-
-            .ai-message .bubble.no-bg .markdown h1 {
-                font-size: 18px;
-            }
-
-            .ai-message .bubble.no-bg .markdown h2 {
-                font-size: 17px;
-            }
-
-            .ai-message .bubble.no-bg .markdown h3 {
-                font-size: 16px;
-            }
-
-            .ai-message .bubble.no-bg .markdown ul,
-            .ai-message .bubble.no-bg .markdown ol {
-                padding-left: 20px;
-            }
-
-            .input-area {
-                bottom: 10px;
-                width: calc(100vw - 20px);
-                gap: 6px;
-            }
-
-            .chat-container.start-mode .input-area {
-                width: calc(100vw - 24px);
-            }
-
-            .option-buttons {
-                left: 12px;
-                bottom: 10px;
-                gap: 6px;
-                overflow-x: auto;
-                max-width: calc(100% - 92px);
-                padding-bottom: 0;
-            }
-
-            .option-buttons::-webkit-scrollbar {
-                display: none;
-            }
-
-            .option-btn {
-                padding: 7px 10px;
-                font-size: 12px;
-                flex-shrink: 0;
-            }
-
-            #question-input {
-                min-height: 84px;
-                max-height: 116px;
-                padding: 11px 82px 44px 14px;
-                font-size: 14px;
-                border-radius: 24px;
-            }
-
-            #send-btn {
-                right: 10px;
-                bottom: 10px;
-                height: 32px;
-                padding: 0 14px;
-                font-size: 13px;
-                border-radius: 17px;
-            }
-
-            .modal {
-                padding: 14px;
-                align-items: center;
-            }
-
-            .modal-content {
-                width: 100%;
-                max-width: 360px;
-                padding: 20px 16px;
-                border-radius: 14px;
-            }
-
-            .modal-title {
-                font-size: 17px;
-                margin-bottom: 16px;
-            }
-
-            .form-item {
-                margin-bottom: 14px;
-            }
-
-            .form-item input {
-                padding: 11px 12px;
-                font-size: 14px;
-            }
-
-            .modal-btns {
-                gap: 8px;
-            }
-
-            .modal-btn {
-                padding: 11px 8px;
-                font-size: 14px;
-            }
-        }
-
-        /* =========================
-        超小屏手机，比如 360px 以下
-        ========================= */
-        @media (max-width: 380px) {
-            .chat-header > span {
-                max-width: 32vw;
-                font-size: 14px;
-            }
-
-            .history-btn {
-                font-size: 10px;
-                padding: 4px 6px;
-            }
-
-            .history-record-title {
-                overflow: hidden;
-                white-space: nowrap;
-                text-overflow: ellipsis;
-            }
-            .history-record {
-                min-height: 44px; 
-                padding: 10px 10px 10px 10px; 
-                font-size: 13px;
-            }
-
-            #question-input {
-                padding-right: 68px;
-            }
-
-            #send-btn {
-                padding: 0 11px;
-                font-size: 12px;
-            }
-
-            .bubble {
-                font-size: 13px;
-            }
-
-            .ai-message .bubble.no-bg .markdown {
-                font-size: 13px;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>华南理工校园百事通</title>
+<style>
+:root{
+    --bg:#1e1e1e;
+    --panel:#1f1f1f;
+    --card:#242424;
+    --soft:#2a2a2a;
+    --soft-2:#333;
+    --hover:#3b3b3b;
+    --active:#444;
+    --border:#444;
+    --text:#e0e0e0;
+    --text-strong:#fff;
+    --muted:#999;
+    --danger:#ff6b6b;
+    --shadow:0 10px 28px rgba(0,0,0,.28);
+    --side-shadow:6px 0 18px rgba(0,0,0,.28);
+    --input-bg:#2a2a2a;
+    --ai-bg:#2b2b2b;
+    --user-bg:#3a3a3a;
+    --send-bg:#fff;
+    --send-text:#000;
+    --quote-bg:rgba(255,255,255,.05);
+    --scroll:#555;
+    --sidebar-width:260px;
+    --header-h:72px;
+}
+body.light-theme{
+    --bg:#f2f0eb;
+    --panel:#f4f1eb;
+    --card:#f7f4ef;
+    --soft:#eeeae2;
+    --soft-2:#e9e4da;
+    --hover:#e6e1d7;
+    --active:#d8d1c3;
+    --border:#d7d2c8;
+    --text:#20242b;
+    --text-strong:#111827;
+    --muted:#767066;
+    --danger:#dc2626;
+    --shadow:0 12px 32px rgba(64,56,45,.13);
+    --side-shadow:6px 0 22px rgba(64,56,45,.14);
+    --input-bg:#f7f4ef;
+    --ai-bg:#f7f4ef;
+    --user-bg:#e1ddd4;
+    --send-bg:#111827;
+    --send-text:#fff;
+    --quote-bg:#e9e4da;
+    --scroll:#b9b1a6;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+html,body{width:100%;height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text)}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+.hidden,.admin-hidden{display:none!important}
+
+.toast-message{
+    position:fixed;top:28px;left:50%;z-index:3000;
+    transform:translate(-50%,-12px);
+    max-width:calc(100vw - 28px);
+    padding:10px 18px;border-radius:999px;
+    background:rgba(70,70,70,.96);color:#fff;
+    box-shadow:var(--shadow);opacity:0;pointer-events:none;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    transition:.25s ease;
+}
+body.light-theme .toast-message{
+    background:rgba(247,244,239,.96);
+    color:var(--text-strong);
+    border:1px solid var(--border);
+}
+.toast-message.show{opacity:1;transform:translate(-50%,0)}
+
+.chat-container{
+    position:fixed;top:0;left:0;width:100vw;height:100vh;
+    background:var(--bg);color:var(--text);
+    display:flex;flex-direction:column;overflow:hidden;
+    transition:left .3s ease,width .3s ease;
+}
+body.sidebar-open.sidebar-push .chat-container{
+    left:var(--sidebar-width);
+    width:calc(100vw - var(--sidebar-width));
+}
+
+.chat-header{
+    height:var(--header-h);
+    padding:16px 20px;
+    background:var(--bg);
+    border-bottom:1px solid var(--border);
+    color:var(--text-strong);
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+    box-shadow:0 1px 10px rgba(64,56,45,.08);
+    flex-shrink:0;
+}
+.chat-header>span{
+    position:absolute;left:50%;transform:translateX(-50%);
+    max-width:calc(100% - 260px);
+    overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+    font-size:18px;font-weight:700;
+}
+.user-info{position:absolute;right:16px;display:flex;align-items:center;gap:10px}
+.health-status{
+    font-size:14px;padding:4px 10px;border-radius:999px;
+    background:rgba(255,255,255,.16);
+    color:var(--text);
+}
+body.light-theme .health-status{
+    color:#064e3b;
+    border:1px solid rgba(16,185,129,.22);
+}
+
+.sidebar-toggle{
+    position:fixed;left:0;top:0;z-index:300;
+    width:64px;height:var(--header-h);
+    border:none;border-bottom:1px solid var(--border);
+    background:var(--bg);color:var(--text-strong);
+    font-size:24px;transition:left .3s ease,background .2s;
+}
+body.sidebar-open .sidebar-toggle{left:var(--sidebar-width)}
+
+.sidebar{
+    position:fixed;left:calc(-1 * var(--sidebar-width));top:0;z-index:200;
+    width:var(--sidebar-width);height:100vh;
+    background:var(--panel);color:var(--text);
+    border-right:1px solid var(--border);
+    padding:100px 8px 12px 12px;
+    overflow:hidden;transition:left .3s ease,box-shadow .3s ease;
+}
+.sidebar.open{left:0;box-shadow:var(--side-shadow)}
+.sidebar-brand{
+    position:absolute;top:6px;left:12px;z-index:1;
+    min-height:58px;padding:6px 8px;border-radius:10px;
+    display:flex;align-items:center;background:var(--panel);
+}
+.sidebar-brand img{
+    display:block;height:60px;max-width:190px;width:auto;object-fit:contain;border:none;
+    filter:brightness(1.18) contrast(1.22) drop-shadow(0 0 1px rgba(255,255,255,.55)) drop-shadow(0 2px 8px rgba(255,255,255,.08));
+}
+body.light-theme .sidebar-brand img{
+    filter:invert(1) brightness(.92) contrast(1.08) drop-shadow(0 1px 4px rgba(15,23,42,.10));
+}
+.sidebar-content{
+    height:100%;display:flex;flex-direction:column;
+    padding:0 8px 82px 0;overflow:hidden;
+}
+.new-chat-card{
+    width:calc(100% - 8px);min-height:48px;margin-bottom:10px;
+    padding:0 12px;border:1px solid var(--border);border-radius:8px;
+    background:var(--soft);color:var(--text);
+    display:flex;align-items:center;flex-shrink:0;
+}
+.new-chat-card:hover{background:var(--hover)}
+.history-label{font-size:13px;color:var(--muted);margin:6px 0 4px 4px;flex-shrink:0}
+.history-scroll-area{
+    flex:1;overflow-y:auto;padding-right:8px;margin-right:-8px;
+    scrollbar-gutter:stable;
+}
+.history-scroll-area.scroll-locked{overflow-y:scroll}
+.history-records{display:flex;flex-direction:column;gap:8px;width:100%}
+.history-record{
+    position:relative;width:100%;min-height:48px;
+    padding:12px 42px 12px 12px;border:none;border-radius:8px;
+    background:transparent;color:var(--text);
+    display:flex;align-items:center;overflow:visible;
+    transition:background .2s,box-shadow .2s;
+}
+.history-record:hover,.history-record.menu-open{
+    background:var(--hover);
+    box-shadow:0 8px 18px rgba(0,0,0,.22);
+}
+.history-record.selected{
+    background:var(--active);color:var(--text-strong);
+    box-shadow:0 8px 18px rgba(0,0,0,.24);
+}
+.history-record.selected:hover{filter:brightness(1.04)}
+.history-record-title{
+    flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+}
+.history-more-btn{
+    position:absolute;right:8px;top:50%;
+    transform:translateY(-50%);
+    width:26px;height:26px;line-height:26px;
+    border:none;border-radius:6px;background:transparent;color:var(--text);
+    font-size:18px;opacity:0;transition:.2s;
+}
+.history-record:hover .history-more-btn,
+.history-record.menu-open .history-more-btn{opacity:1}
+.history-more-btn:hover,
+.history-record.menu-open .history-more-btn{background:rgba(255,255,255,.15)}
+body.light-theme .history-more-btn:hover,
+body.light-theme .history-record.menu-open .history-more-btn{background:rgba(64,56,45,.10)}
+.history-menu,.sidebar-user-menu{
+    position:fixed;z-index:1200;width:118px;padding:6px;
+    background:#2f2f2f;border:1px solid var(--border);border-radius:10px;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);
+}
+body.light-theme .history-menu,
+body.light-theme .sidebar-user-menu{background:#f6f3ed;box-shadow:0 12px 30px rgba(64,56,45,.16)}
+.history-menu.drop-down{transform-origin:left top}
+.history-menu.drop-up{transform-origin:left bottom}
+.history-menu-item,.sidebar-user-menu-item{
+    width:100%;padding:9px 10px;border:none;border-radius:8px;
+    background:transparent;color:var(--text);font-size:14px;text-align:left;
+}
+.history-menu-item:hover,.sidebar-user-menu-item:hover{background:var(--active)}
+body.light-theme .history-menu-item:hover,
+body.light-theme .sidebar-user-menu-item:hover{background:var(--soft-2)}
+.history-menu-item.danger,.sidebar-user-menu-item.danger{color:var(--danger)}
+.history-menu-item.danger:hover,.sidebar-user-menu-item.danger:hover{background:rgba(255,80,80,.15)}
+
+.sidebar-user-area{
+    position:absolute;left:0;bottom:0;width:100%;height:72px;z-index:20;
+    border-top:1px solid var(--border);background:var(--panel);padding:10px 12px;
+}
+.sidebar-user-btn{
+    width:100%;height:52px;border:none;border-radius:10px;
+    background:transparent;color:var(--text);
+    display:flex;align-items:center;gap:10px;padding:0 10px;text-align:left;
+}
+.sidebar-user-btn:hover{background:var(--soft)}
+.sidebar-user-avatar,.profile-avatar{
+    border-radius:50%;background:var(--active);color:var(--text-strong);
+    display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;
+}
+.sidebar-user-avatar{width:34px;height:34px;font-size:15px}
+.sidebar-user-name{
+    flex:1;font-size:14px;color:var(--text-strong);
+    overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+}
+
+.chat-messages{
+    flex:1;width:min(92%,860px);margin:0 auto;
+    padding:20px 16px 170px;
+    scroll-padding-bottom:170px;
+    overflow-y:auto;display:flex;flex-direction:column;gap:16px;
+    scrollbar-width:thin;scrollbar-color:transparent transparent;
+}
+.chat-messages:hover,.chat-messages.scrolling{scrollbar-color:var(--scroll) transparent}
+.chat-messages::-webkit-scrollbar,
+.history-scroll-area::-webkit-scrollbar,
+.settings-content::-webkit-scrollbar{width:6px}
+.chat-messages::-webkit-scrollbar-track,
+.history-scroll-area::-webkit-scrollbar-track,
+.settings-content::-webkit-scrollbar-track{background:transparent}
+.chat-messages::-webkit-scrollbar-thumb,
+.history-scroll-area::-webkit-scrollbar-thumb,
+.settings-content::-webkit-scrollbar-thumb{background:var(--scroll);border-radius:3px}
+.chat-messages::-webkit-scrollbar-thumb{background:transparent}
+.chat-messages:hover::-webkit-scrollbar-thumb,
+.chat-messages.scrolling::-webkit-scrollbar-thumb{background:var(--scroll)}
+
+.message{max-width:85%;display:flex}
+.ai-message{align-self:flex-start}
+.user-message{align-self:flex-end;flex-direction:row-reverse}
+.bubble{
+    padding:12px 16px;border-radius:18px;line-height:1.6;
+    word-break:break-word;overflow-wrap:anywhere;
+}
+.user-message .bubble{
+    background:var(--user-bg);color:var(--text-strong);
+    border-bottom-right-radius:6px;
+}
+.ai-message .bubble{
+    background:var(--ai-bg);color:var(--text);
+    border-bottom-left-radius:6px;
+}
+.ai-message .bubble.no-bg{
+    background:none;border-radius:0;padding:0;color:var(--text);
+}
+.loading{color:var(--muted);font-size:14px;padding:8px 16px}
+.bubble-suffix{font-size:12px;color:var(--muted);text-align:right;margin-top:4px}
+
+.markdown{font-size:15px;line-height:1.75;margin-bottom:4px;word-break:break-word}
+.markdown h1{font-size:20px;margin:16px 0 10px}
+.markdown h2{font-size:18px;margin:14px 0 8px}
+.markdown h3{font-size:16px;margin:12px 0 6px}
+.markdown h4{font-size:15px;margin:10px 0 5px}
+.markdown h1,.markdown h2,.markdown h3,.markdown h4{font-weight:700;line-height:1.5;color:var(--text-strong)}
+.markdown p{margin:6px 0}
+.markdown ul{padding-left:22px;margin:8px 0}
+.markdown ol{padding-left:24px;margin:8px 0}
+.markdown li{margin:5px 0;line-height:1.7}
+.markdown hr{border:none;height:1px;background:rgba(128,128,128,.28);margin:16px 0}
+.markdown blockquote{
+    margin:10px 0;padding:8px 12px;border-left:3px solid #888;
+    background:var(--quote-bg);color:var(--text);border-radius:6px;
+}
+.markdown strong{font-weight:700;color:var(--text-strong)}
+.markdown em{font-style:italic}
+
+.greeting-text{
+    position:absolute;left:50%;top:calc(50% - 130px);z-index:5;
+    transform:translateX(-50%);
+    width:min(92%,780px);text-align:center;pointer-events:none;
+    color:var(--text-strong);font-size:24px;font-weight:700;line-height:1.4;
+}
+.chat-container.chat-active .greeting-text,
+.chat-container:not(.start-mode) .greeting-text{display:none}
+.chat-container.start-mode .chat-messages{display:none}
+
+.input-area{
+    position:absolute;left:50%;bottom:16px;z-index:10;
+    transform:translateX(-50%);
+    width:min(92%,780px);
+}
+.chat-container.start-mode .input-area{
+    top:50%;bottom:auto;transform:translate(-50%,-50%);
+}
+.chat-container.chat-active .input-area{animation:inputDropDown .35s ease forwards}
+@keyframes inputDropDown{
+    from{top:50%;bottom:auto;transform:translate(-50%,-50%)}
+    to{top:auto;bottom:16px;transform:translateX(-50%)}
+}
+.input-wrapper{position:relative;width:100%}
+#question-input{
+    width:100%;min-height:118px;max-height:min(200px,50vh);
+    padding:16px 100px 52px 18px;
+    resize:none;display:block;outline:none;
+    border:1px solid var(--border);border-radius:28px;
+    background:var(--input-bg);color:var(--text);
+    font-size:clamp(14px,1.6vw,16px);line-height:1.7;
+    box-shadow:0 10px 30px rgba(64,56,45,.12);
+    transition:border-color .2s,box-shadow .2s;
+}
+#question-input:focus{border-color:#999;box-shadow:0 0 0 1px rgba(255,255,255,.12),0 12px 32px rgba(64,56,45,.14)}
+#question-input::placeholder{color:var(--muted)}
+.option-buttons{
+    position:absolute;left:14px;bottom:12px;z-index:2;
+    display:flex;gap:8px;max-width:calc(100% - 110px);
+}
+.option-btn{
+    padding:7px 12px;border-radius:24px;border:1px solid var(--border);
+    background:var(--input-bg);color:var(--text);
+    font-size:clamp(12px,1.5vw,13px);line-height:1;
+    white-space:nowrap;transition:.2s;
+}
+.option-btn:hover{background:var(--hover);border-color:#999}
+.option-btn.active{background:var(--active);border-color:#aaa;color:var(--text-strong)}
+#send-btn{
+    position:absolute;right:12px;bottom:12px;height:36px;
+    padding:0 20px;border:none;border-radius:18px;
+    background:var(--send-bg);color:var(--send-text);
+    font-size:14px;font-weight:500;transition:.2s;
+}
+#send-btn:hover{filter:brightness(.94)}
+#send-btn:disabled{background:#bdbdbd;color:#555;cursor:not-allowed}
+
+.profile-page,.settings-page{
+    flex:1;background:var(--bg);color:var(--text);
+    display:none;justify-content:center;align-items:center;padding:24px;
+}
+.profile-card,.settings-card{
+    width:min(92%,860px);min-height:360px;height:min(52vh,460px);
+    background:var(--card);border:1px solid var(--border);border-radius:18px;
+    box-shadow:var(--shadow);
+}
+.profile-card{
+    padding:28px 24px;text-align:center;
+    display:flex;flex-direction:column;justify-content:center;align-items:center;
+}
+.profile-avatar{width:76px;height:76px;font-size:30px;margin-bottom:16px}
+.profile-name{font-size:20px;font-weight:700;color:var(--text-strong);margin-bottom:10px}
+.profile-info{font-size:14px;color:var(--muted);line-height:1.8}
+.settings-card{overflow:hidden;display:flex}
+.settings-sidebar{
+    width:190px;flex-shrink:0;padding:18px 12px;
+    border-right:1px solid var(--border);background:var(--soft);
+}
+.settings-sidebar-title{font-size:13px;color:var(--muted);margin:0 0 12px 4px}
+.settings-nav-btn{
+    width:100%;min-height:42px;padding:0 12px;border:none;border-radius:10px;
+    background:transparent;color:var(--text);font-size:14px;text-align:left;
+}
+.settings-nav-btn:hover,.settings-nav-btn.active{background:var(--active);color:var(--text-strong)}
+.settings-content{flex:1;padding:28px 30px;overflow-y:auto;background:var(--card)}
+.settings-panel-title{font-size:20px;font-weight:700;color:var(--text-strong);margin-bottom:8px}
+.settings-panel-desc{font-size:14px;color:var(--muted);margin-bottom:22px;line-height:1.7}
+.theme-options{display:flex;gap:14px;flex-wrap:wrap}
+.theme-option-btn{
+    min-width:130px;height:44px;padding:0 18px;border-radius:14px;
+    border:1px solid var(--border);background:var(--soft);color:var(--text);
+    transition:.2s;
+}
+.theme-option-btn:hover{background:var(--hover);transform:translateY(-1px)}
+.theme-option-btn.active{background:var(--send-bg);border-color:var(--send-bg);color:var(--send-text)}
+
+.modal{
+    position:fixed;inset:0;z-index:1000;
+    background:rgba(0,0,0,.5);
+    display:flex;justify-content:center;align-items:center;
+}
+.rename-modal{z-index:2500}
+.modal-content{
+    width:90%;max-width:400px;padding:24px;border-radius:12px;
+    background:var(--panel);color:var(--text);
+    border:1px solid var(--border);box-shadow:var(--shadow);
+}
+.rename-modal .modal-content{max-width:420px}
+.modal-title{font-size:18px;font-weight:700;text-align:center;color:var(--text-strong);margin-bottom:20px}
+.form-item{margin-bottom:16px}
+.form-item label{display:block;margin-bottom:6px;font-size:14px;color:var(--muted)}
+.form-item input{
+    width:100%;padding:10px 12px;border-radius:8px;
+    border:1px solid transparent;background:var(--soft);color:var(--text);
+    font-size:14px;outline:none;
+}
+.form-item input:focus{border-color:#aaa;box-shadow:0 0 0 1px rgba(255,255,255,.12)}
+.form-item input::placeholder{color:var(--muted)}
+.modal-btns{display:flex;gap:10px;margin-top:20px}
+.modal-btn{flex:1;padding:10px;border:none;border-radius:8px;font-size:14px}
+.primary-btn{background:#555;color:#fff}
+.primary-btn:hover{background:#666}
+body.light-theme .primary-btn{background:#111827;color:#fff}
+body.light-theme .primary-btn:hover{background:#273142}
+.cancel-btn{background:#e6e6e6;color:#000}
+.cancel-btn:hover{background:#f2f2f2}
+body.light-theme .cancel-btn{background:#e9e4da;color:#111827}
+body.light-theme .cancel-btn:hover{background:#ded8cc}
+.register-link,.login-link{margin-top:12px;text-align:right}
+.register-link span,.login-link span{display:inline-block;font-size:13px;color:var(--muted);cursor:pointer;padding:2px 4px}
+.register-link span:hover,.login-link span:hover{color:var(--text-strong)}
+.error-msg{color:var(--danger);font-size:12px;margin-top:4px;min-height:16px}
+
+@media(max-width:900px){
+    :root{--header-h:64px}
+    .chat-header{padding:12px 14px 12px 64px}
+    .chat-header>span{font-size:16px;max-width:48vw}
+    .health-status{font-size:12px;padding:4px 8px}
+    .sidebar-toggle{width:56px;font-size:22px}
+    .sidebar{padding-top:102px}
+    .sidebar-brand{top:12px;min-height:52px}
+    .sidebar-brand img{height:44px;max-width:172px}
+    .chat-messages{width:min(94%,760px);padding:18px 12px 166px}
+    .profile-card,.settings-card{width:min(94%,760px);min-height:330px;height:min(50vh,420px)}
+    .settings-sidebar{width:170px}
+    .input-area,.chat-container.start-mode .input-area{width:min(94%,720px)}
+}
+@media(max-width:600px){
+    :root{--header-h:58px}
+    .chat-container{height:100dvh}
+    body.sidebar-open.sidebar-push .chat-container{left:0;width:100vw}
+    .chat-header{padding:8px 52px}
+    .chat-header>span{font-size:15px;max-width:60%}
+    .health-status{display:none}
+    .sidebar-toggle{width:46px;font-size:20px}
+    .sidebar{
+        left:-68vw;width:68vw;max-width:260px;height:100dvh;
+        padding:94px 8px 68px 10px;
+    }
+    body.sidebar-open .sidebar-toggle{left:min(68vw,260px)}
+    .sidebar-user-area{height:68px;padding:9px 10px}
+    .sidebar-user-btn{height:50px}
+    .sidebar-user-avatar{width:32px;height:32px;font-size:14px}
+    .sidebar-brand{top:10px;left:10px;min-height:46px;padding:4px 6px}
+    .sidebar-brand img{height:38px;max-width:150px}
+    .new-chat-card,.history-record{min-height:44px;font-size:14px}
+    .history-record{padding:10px 40px 10px 10px}
+    .history-more-btn{opacity:1;width:28px;height:28px;line-height:28px}
+    .history-menu,.sidebar-user-menu{width:112px}
+    .chat-messages{width:100%;padding:14px 12px 150px;gap:12px}
+    .message{max-width:92%}
+    .bubble{padding:10px 13px;border-radius:16px;font-size:14px;line-height:1.65}
+    .markdown{font-size:14px}
+    .markdown h1{font-size:18px}.markdown h2{font-size:17px}.markdown h3{font-size:16px}
+    .profile-page,.settings-page{padding:14px 12px}
+    .profile-card{width:100%;min-height:260px;height:min(46vh,360px);padding:22px 16px;border-radius:16px}
+    .settings-card{width:100%;min-height:360px;height:min(68vh,520px);border-radius:16px;flex-direction:column}
+    .settings-sidebar{width:100%;padding:12px;border-right:none;border-bottom:1px solid var(--border)}
+    .settings-content{padding:20px 16px}
+    .theme-options{flex-direction:column;gap:10px}
+    .theme-option-btn{width:100%}
+    .input-area{bottom:10px;width:calc(100vw - 20px)}
+    .chat-container.start-mode .input-area{width:calc(100vw - 24px)}
+    @keyframes inputDropDown{
+        from{top:50%;bottom:auto;transform:translate(-50%,-50%)}
+        to{top:auto;bottom:10px;transform:translateX(-50%)}
+    }
+    #question-input{
+        min-height:84px;max-height:116px;
+        padding:11px 82px 44px 14px;
+        font-size:14px;border-radius:24px;
+    }
+    .option-buttons{
+        left:12px;bottom:10px;gap:6px;
+        max-width:calc(100% - 92px);
+        overflow-x:auto;scrollbar-width:none;
+    }
+    .option-buttons::-webkit-scrollbar{display:none}
+    .option-btn{padding:7px 10px;font-size:12px;flex-shrink:0}
+    #send-btn{right:10px;bottom:10px;height:32px;padding:0 14px;font-size:13px}
+    .modal{padding:14px}
+    .modal-content{width:100%;max-width:360px;padding:20px 16px;border-radius:14px}
+}
+@media(max-width:380px){
+    .chat-header>span{max-width:32vw;font-size:14px}
+    .history-record{padding:10px;font-size:13px}
+    #question-input{padding-right:68px}
+    #send-btn{padding:0 11px;font-size:12px}
+    .bubble,.markdown{font-size:13px}
+}
+</style>
 </head>
-<body>
-    <div id="toast-message" class="toast-message"></div>
+<body class="light-theme">
+<div id="toast-message" class="toast-message"></div>
 
-    <button class="sidebar-toggle"
-            onclick="toggleSidebar()">
-        ☰
-    </button>
+<button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
 
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
-            <img src="./bbg_logo_with_bomb_icon.png" alt="华工百事通logo">
-        </div>
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <img src="./bbg_logo_with_bomb_icon.png" alt="华工百事通logo">
+    </div>
 
-        <div class="sidebar-content">
-            <div class="new-chat-card"
-                onclick="createNewChat()">
-                新对话
-            </div>
-
-            <div class="history-label">
-                历史记录
-            </div>
-
-            <div class="history-scroll-area">
-                <div id="history-list"
-                    class="history-records">
-                </div>
-            </div>
-        </div>
-
-        <div class="sidebar-user-area">
-            <button class="sidebar-user-btn" onclick="toggleUserMenu(event)">
-                <div class="sidebar-user-avatar" id="sidebar-user-avatar">游</div>
-                <div class="sidebar-user-name" id="sidebar-user-name">未登录</div>
-            </button>
-
-            <div class="sidebar-user-menu hidden" id="sidebar-user-menu"></div>
+    <div class="sidebar-content">
+        <div class="new-chat-card" onclick="createNewChat()">新对话</div>
+        <div class="history-label">历史记录</div>
+        <div class="history-scroll-area">
+            <div id="history-list" class="history-records"></div>
         </div>
     </div>
 
-    <div class="chat-container start-mode" id="chat-container">
-
-        <div class="chat-header">
-            <span id="conversation-title">新对话</span>
-            <div class="user-info">
-                <span id="health-status" class="health-status">检查服务中...</span>
-            </div>
-        </div>
-
-        <div id="chat-messages" class="chat-messages empty"></div>
-
-        <div id="profile-page" class="profile-page">
-            <div class="profile-card">
-                <div class="profile-avatar" id="profile-avatar">游</div>
-                <div class="profile-name" id="profile-name">未登录</div>
-
-                <div class="profile-info">
-                    <div id="profile-login-status">当前状态：未登录</div>
-                    <div id="profile-admin-status">权限：普通用户</div>
-                </div>
-            </div>
-        </div>
-
-        <div id="greeting" class="greeting-text"></div>
-
-        <div class="input-area">
-            <div class="input-wrapper">
-                <textarea id="question-input"
-                    placeholder="你好！我是华南理工校园百事通，有任何校园问题都可以问我～"
-                    onkeydown="if(event.keyCode===13&&!event.shiftKey){event.preventDefault();sendQuestion();}"></textarea>
-
-                <div class="option-buttons">
-                    <button type="button" id="deep-btn" class="option-btn" onclick="toggleDeepSearch()">深度思考</button>
-                    <button type="button" id="admin-btn" class="option-btn admin-hidden" onclick="toggleAdminMode()">管理员模式</button>
-                </div>
-
-                <button id="send-btn" onclick="sendQuestion()">发送</button>
-            </div>
-        </div>
+    <div class="sidebar-user-area">
+        <button class="sidebar-user-btn" onclick="toggleUserMenu(event)">
+            <div class="sidebar-user-avatar" id="sidebar-user-avatar">游</div>
+            <div class="sidebar-user-name" id="sidebar-user-name">未登录</div>
+        </button>
+        <div class="sidebar-user-menu hidden" id="sidebar-user-menu"></div>
     </div>
+</aside>
 
-    <!-- 重命名历史记录弹窗 -->
-    <div id="rename-modal" class="modal rename-modal hidden">
-        <div class="modal-content">
-            <div class="modal-title">重命名对话</div>
+<main class="chat-container start-mode" id="chat-container">
+    <header class="chat-header">
+        <span id="conversation-title">新对话</span>
+        <div class="user-info">
+            <span id="health-status" class="health-status">检查服务中...</span>
+        </div>
+    </header>
 
-            <div class="form-item">
-                <label for="rename-title-input">新的对话标题</label>
-                <input
-                    type="text"
-                    id="rename-title-input"
-                    placeholder="请输入新的对话标题"
-                    maxlength="50"
-                >
-                <div class="error-msg" id="rename-title-err"></div>
-            </div>
+    <div id="chat-messages" class="chat-messages"></div>
 
-            <div class="modal-btns">
-                <button class="modal-btn cancel-btn" onclick="hideRenameModal()">取消</button>
-                <button class="modal-btn primary-btn" onclick="confirmRenameConversation()">确定</button>
+    <section id="profile-page" class="profile-page">
+        <div class="profile-card">
+            <div class="profile-avatar" id="profile-avatar">游</div>
+            <div class="profile-name" id="profile-name">未登录</div>
+            <div class="profile-info">
+                <div id="profile-login-status">当前状态：未登录</div>
+                <div id="profile-admin-status">权限：普通用户</div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- 登录弹窗 -->
-    <div id="login-modal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-title">用户登录</div>
-            <div class="form-item">
-                <label for="login-username">用户名</label>
-                <input type="text" id="login-username" placeholder="3-20位英文/数字/下划线">
-                <div class="error-msg" id="login-username-err"></div>
+    <section id="settings-page" class="settings-page">
+        <div class="settings-card">
+            <div class="settings-sidebar">
+                <div class="settings-sidebar-title">设置列表</div>
+                <button type="button" class="settings-nav-btn active" onclick="showSettingsPanel('theme')">设置主题</button>
             </div>
-            <div class="form-item">
-                <label for="login-password">密码</label>
-                <input type="password" id="login-password" placeholder="至少6位字符">
-                <div class="error-msg" id="login-password-err"></div>
-            </div>
-            <div class="error-msg" id="login-err"></div>
-            <div class="modal-btns">
-                <button class="modal-btn cancel-btn" onclick="hideLoginModal()">取消</button>
-                <button class="modal-btn primary-btn" onclick="doLogin()">登录</button>
-            </div>
-
-            <div class="register-link">
-                <span onclick="switchToRegister()">
-                    如没有账号，请先注册
-                </span>
-            </div>
-        </div>
-    </div>
-
-    <!-- 注册弹窗 -->
-    <div id="register-modal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-title">用户注册</div>
-            <div class="form-item">
-                <label for="register-username">用户名</label>
-                <input type="text" id="register-username" placeholder="3-20位英文/数字/下划线">
-                <div class="error-msg" id="register-username-err"></div>
-            </div>
-            <div class="form-item">
-                <label for="register-password">密码</label>
-                <input type="password" id="register-password" placeholder="至少6位字符">
-                <div class="error-msg" id="register-password-err"></div>
-            </div>
-            <div class="error-msg" id="register-err"></div>
-            <div class="modal-btns">
-                <button class="modal-btn cancel-btn" onclick="hideRegisterModal()">取消</button>
-                <button class="modal-btn primary-btn" onclick="doRegister()">注册</button>
-            </div>
-
-            <div class="register-link login-link">
-                <span onclick="switchToLogin()">
-                    登录
-                </span>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const BASE_URL = "https://backup.u850688.nyat.app:54767";
-        let isRequesting = false;
-        let token = localStorage.getItem("token") || "";
-        let username = localStorage.getItem("username") || "";
-        let isAdmin = localStorage.getItem("isAdmin") === "true" || localStorage.getItem("admin") === "true" || false;
-        let conversations = [];
-        let currentConversation = [];
-        let currentConversationId = "";
-        let openedHistoryMenuIndex = null;
-        let renamingHistoryIndex = null;
-        const SIDEBAR_WIDTH = 260;
-        const MIN_CHAT_WIDTH_AFTER_PUSH = 720;
-
-        let toastTimer = null;
-
-        function showToast(message) {
-            const toast = document.getElementById("toast-message");
-            if (!toast) return;
-
-            toast.textContent = message;
-            toast.classList.add("show");
-
-            clearTimeout(toastTimer);
-
-            toastTimer = setTimeout(() => {
-                toast.classList.remove("show");
-            }, 2200);
-        }
-
-        function setConversationTitle(title) {
-            const titleEl = document.getElementById("conversation-title");
-            titleEl.innerText = title || "新对话";
-        }
-
-        function updateSidebarPushMode() {
-            const sidebar = document.getElementById("sidebar");
-            if (!sidebar) return;
-
-            const isSidebarOpen = sidebar.classList.contains("open");
-
-            /*
-            判断窗口宽度是否足够：
-            只有剩余宽度还能容纳主对话区时，才启用推开效果。
-            */
-            const canPushChat = window.innerWidth - SIDEBAR_WIDTH >= MIN_CHAT_WIDTH_AFTER_PUSH;
-
-            document.body.classList.toggle(
-                "sidebar-push",
-                isSidebarOpen && canPushChat
-            );
-        }
-        
-        function updateGreeting() {
-            const greetingEl = document.getElementById("greeting");
-            if (!greetingEl) return;
-
-            const now = new Date();
-            const hour = now.getHours();
-            let timeGreeting = "";
-            if (hour >= 6 && hour < 12) timeGreeting = "上午好";
-            else if (hour >= 12 && hour < 14) timeGreeting = "中午好";
-            else if (hour >= 14 && hour < 18) timeGreeting = "下午好";
-            else if (hour >= 18 && hour < 24) timeGreeting = "晚上好";
-            else timeGreeting = "凌晨好";
-
-            const username = localStorage.getItem("username") || "";
-            const name = username ? username + "同学" : "同学";
-            greetingEl.textContent = `${timeGreeting}，${name}`;
-        }
-
-        // 页面加载时调用
-        window.addEventListener("load", updateGreeting);
-
-        window.onload = function () {
-            checkBackendHealth();
-            setInterval(checkBackendHealth, 30000);
-
-            const deepBtn = document.getElementById("deep-btn");
-            const saved = localStorage.getItem("deepSearchEnabled");
-            if (saved === "true") {
-                deepBtn.classList.add("active");
-            } else {
-                deepBtn.classList.remove("active");
-            }
-
-            initUserStatus();
-            updateGreeting();
-            renderHistoryList();
-
-            updateSidebarPushMode();
-            window.addEventListener("resize", updateSidebarPushMode);
-
-            if (token) {
-                checkTokenValid();
-            }
-        };
-
-        let chatScrollTimer = null;
-        let lockedHistoryScrollTop = 0;
-
-        document.addEventListener("DOMContentLoaded", () => {
-            const chat = document.getElementById("chat-messages");
-
-            if (chat) {
-                chat.addEventListener("scroll", () => {
-                    chat.classList.add("scrolling");
-
-                    clearTimeout(chatScrollTimer);
-                    chatScrollTimer = setTimeout(() => {
-                        chat.classList.remove("scrolling");
-                    }, 800);
-                });
-            }
-
-            const historyScrollArea = document.querySelector(".history-scroll-area");
-
-            if (historyScrollArea) {
-                /*
-                打开历史记录菜单时，禁止鼠标滚轮滚动历史记录。
-                注意：这里不是隐藏滚动条，而是拦截滚动行为。
-                */
-                historyScrollArea.addEventListener("wheel", (event) => {
-                    if (historyScrollArea.classList.contains("scroll-locked")) {
-                        event.preventDefault();
-                    }
-                }, { passive: false });
-
-                /*
-                手机端触摸滑动时也禁止历史记录滚动。
-                */
-                historyScrollArea.addEventListener("touchmove", (event) => {
-                    if (historyScrollArea.classList.contains("scroll-locked")) {
-                        event.preventDefault();
-                    }
-                }, { passive: false });
-
-                /*
-                如果用户拖动滚动条，强制回到打开菜单时的位置。
-                这样既保留滚动条，又不会让菜单和历史记录错位。
-                */
-                historyScrollArea.addEventListener("scroll", () => {
-                    if (historyScrollArea.classList.contains("scroll-locked")) {
-                        historyScrollArea.scrollTop = lockedHistoryScrollTop;
-                    }
-                });
-            }
-
-            const renameInput = document.getElementById("rename-title-input");
-
-            if (renameInput) {
-                renameInput.addEventListener("keydown", (event) => {
-                    if (event.key === "Enter") {
-                        event.preventDefault();
-                        confirmRenameConversation();
-                    }
-
-                    if (event.key === "Escape") {
-                        event.preventDefault();
-                        hideRenameModal();
-                    }
-                });
-            }
-        });
-
-        function initUserStatus() {
-            const adminBtn = document.getElementById("admin-btn");
-
-            if (token) {
-                adminBtn.classList.toggle("admin-hidden", !isAdmin);
-            } else {
-                adminBtn.classList.add("admin-hidden");
-                adminBtn.classList.remove("active");
-            }
-
-            updateSidebarUserInfo();
-        }
-
-        function getAvatarText() {
-            if (token && username) {
-                return username.trim().charAt(0).toUpperCase();
-            }
-            return "游";
-        }
-
-        function updateSidebarUserInfo() {
-            const sidebarAvatar = document.getElementById("sidebar-user-avatar");
-            const sidebarName = document.getElementById("sidebar-user-name");
-
-            const profileAvatar = document.getElementById("profile-avatar");
-            const profileName = document.getElementById("profile-name");
-            const profileLoginStatus = document.getElementById("profile-login-status");
-            const profileAdminStatus = document.getElementById("profile-admin-status");
-
-            const avatarText = getAvatarText();
-            const displayName = token ? (username || "已登录用户") : "未登录";
-
-            if (sidebarAvatar) sidebarAvatar.textContent = avatarText;
-            if (sidebarName) sidebarName.textContent = displayName;
-
-            if (profileAvatar) profileAvatar.textContent = avatarText;
-            if (profileName) profileName.textContent = displayName;
-            if (profileLoginStatus) {
-                profileLoginStatus.textContent = token ? "当前状态：已登录" : "当前状态：未登录";
-            }
-            if (profileAdminStatus) {
-                profileAdminStatus.textContent = isAdmin ? "权限：管理员" : "权限：普通用户";
-            }
-
-            renderSidebarUserMenu();
-        }
-
-        function renderSidebarUserMenu() {
-            const menu = document.getElementById("sidebar-user-menu");
-            if (!menu) return;
-
-            menu.innerHTML = ""; // 先清空
-
-            if (!token) {
-                // 未登录状态显示登录按钮
-                const loginBtn = document.createElement("button");
-                loginBtn.className = "sidebar-user-menu-item";
-                loginBtn.textContent = "登录";
-                loginBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    showLoginModal();
-                    closeUserMenu();
-                };
-                menu.appendChild(loginBtn);
-            } else {
-                // 已登录状态显示设置和退出登录
-                const settingsBtn = document.createElement("button");
-                settingsBtn.className = "sidebar-user-menu-item";
-                settingsBtn.textContent = "设置";
-                settingsBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    openProfilePage();
-                    closeUserMenu();
-                };
-                menu.appendChild(settingsBtn);
-
-                const logoutBtn = document.createElement("button");
-                logoutBtn.className = "sidebar-user-menu-item danger";
-                logoutBtn.textContent = "退出登录";
-                logoutBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    closeUserMenu();
-                    logout();
-                    createNewChat();
-                };
-                menu.appendChild(logoutBtn);
-            }
-        }
-
-        function setSidebarUserMenuPosition(menu) {
-            const sidebar = document.getElementById("sidebar");
-            const userBtn = document.querySelector(".sidebar-user-btn");
-
-            if (!menu || !userBtn) return;
-
-            const btnRect = userBtn.getBoundingClientRect();
-            const sidebarRect = sidebar
-                ? sidebar.getBoundingClientRect()
-                : { left: 0, right: 260, top: 0, bottom: window.innerHeight };
-
-            const menuWidth = menu.offsetWidth || 118;
-            const menuHeight = menu.offsetHeight || 96;
-
-            /*
-            菜单和个人信息栏之间的距离。
-            数字越小越贴近。
-            */
-            const safeGap = 6;
-
-            /*
-            横向位置：
-            让菜单右边缘和个人信息栏右边缘对齐。
-            这样菜单会贴在个人信息栏上方，而不是跑到侧边栏外面太远。
-            */
-            let menuLeft = btnRect.right - menuWidth;
-
-            /*
-            防止菜单左侧超出侧边栏或屏幕。
-            */
-            menuLeft = Math.max(
-                sidebarRect.left + 12,
-                menuLeft
-            );
-
-            /*
-            防止极窄屏幕下菜单右侧超出屏幕。
-            */
-            if (menuLeft + menuWidth + safeGap > window.innerWidth) {
-                menuLeft = Math.max(
-                    safeGap,
-                    window.innerWidth - menuWidth - safeGap
-                );
-            }
-
-            /*
-            纵向位置：
-            菜单紧贴个人信息栏上方。
-            */
-            let menuTop = btnRect.top - menuHeight - safeGap;
-
-            /*
-            防止菜单跑出屏幕顶部。
-            */
-            menuTop = Math.max(
-                sidebarRect.top + safeGap,
-                menuTop
-            );
-
-            menu.style.left = menuLeft + "px";
-            menu.style.top = menuTop + "px";
-        }
-
-        function toggleUserMenu(event) {
-            event.stopPropagation();
-
-            const menu = document.getElementById("sidebar-user-menu");
-            if (!menu) return;
-
-            /*
-            先判断两个菜单当前的状态。
-            注意：必须在 closeHistoryMenus() 之前判断，
-            否则历史记录菜单会先被关掉，后面就不知道它刚才是否打开过了。
-            */
-            const isUserMenuOpen = !menu.classList.contains("hidden");
-
-            const isHistoryMenuOpen =
-                openedHistoryMenuIndex !== null ||
-                !!document.querySelector(".history-menu");
-
-            /*
-            如果历史记录菜单正在打开：
-            点击个人信息栏时，只关闭历史记录菜单，不打开个人信息菜单。
-            */
-            if (isHistoryMenuOpen) {
-                closeHistoryMenus();
-                return;
-            }
-
-            /*
-            如果个人信息菜单自己已经打开：
-            再次点击个人信息栏时，只关闭个人信息菜单。
-            */
-            if (isUserMenuOpen) {
-                closeUserMenu();
-                return;
-            }
-
-            /*
-            没有任何菜单打开时，才正常打开个人信息菜单。
-            */
-            menu.style.visibility = "hidden";
-            menu.classList.remove("hidden");
-
-            setSidebarUserMenuPosition(menu);
-
-            menu.style.visibility = "";
-        }
-
-        function closeUserMenu() {
-            const menu = document.getElementById("sidebar-user-menu");
-            if (menu) {
-                menu.classList.add("hidden");
-                menu.style.visibility = "";
-            }
-        }
-
-        function openProfilePage(event) {
-            if (event) event.stopPropagation();
-
-            closeUserMenu();
-
-            const chatMessages = document.getElementById("chat-messages");
-            const profilePage = document.getElementById("profile-page");
-            const inputArea = document.querySelector(".input-area");
-            const chatContainer = document.getElementById("chat-container");
-
-            if (chatMessages) chatMessages.style.display = "none";
-            if (inputArea) inputArea.style.display = "none";
-            if (profilePage) profilePage.style.display = "flex";
-
-            chatContainer.classList.remove("start-mode");
-            chatContainer.classList.remove("chat-active");
-
-            setConversationTitle("个人信息");
-            updateSidebarUserInfo();
-        }
-
-        function closeProfilePage() {
-            const chatMessages = document.getElementById("chat-messages");
-            const profilePage = document.getElementById("profile-page");
-            const inputArea = document.querySelector(".input-area");
-
-            if (profilePage) profilePage.style.display = "none";
-            if (chatMessages) chatMessages.style.display = "";
-            if (inputArea) inputArea.style.display = "";
-        }
-
-        async function checkTokenValid() {
-            try {
-                const res = await fetch(`${BASE_URL}/user/me?token=${encodeURIComponent(token)}`);
-
-                if (!res.ok) {
-                    throw new Error("Token验证接口响应失败：" + res.status);
-                }
-
-                const result = await res.json();
-
-                /*
-                只有后端明确返回 token 无效时，才清空登录信息。
-                避免刷新页面时因为网络波动、后端临时未响应，误删 localStorage。
-                */
-                if (result.code !== 200) {
-                    console.warn("Token 已失效：", result.msg);
-
-                    clearUserInfo();
-                    conversations = [];
-                    currentConversation = [];
-                    currentConversationId = "";
-
-                    initUserStatus();
-                    updateGreeting();
-                    renderHistoryList();
-                    return;
-                }
-
-                if (result.data) {
-                    username = result.data.username || username;
-                    isAdmin = result.data.admin === true;
-                }
-
-                localStorage.setItem("token", token);
-                localStorage.setItem("username", username);
-                localStorage.setItem("isAdmin", String(isAdmin));
-                localStorage.setItem("admin", String(isAdmin));
-
-                initUserStatus();
-                updateGreeting();
-                await loadUserHistory();
-
-            } catch (err) {
-                console.error("Token验证接口异常，暂时保留本地登录信息：", err);
-
-                initUserStatus();
-                updateGreeting();
-                renderHistoryList();
-            }
-        }
-
-        function clearUserInfo() {
-            token = "";
-            username = "";
-            isAdmin = false;
-            localStorage.removeItem("token");
-            localStorage.removeItem("username");
-            localStorage.removeItem("isAdmin");
-            localStorage.removeItem("admin");
-            localStorage.removeItem("deepSearchEnabled");
-        }
-
-        async function checkBackendHealth() {
-            const el = document.getElementById("health-status");
-            try {
-                const r = await fetch(`${BASE_URL}/health`);
-                if (!r.ok) {
-                    el.textContent = "服务异常";
-                    el.style.background = "rgba(255,70,70,0.2)";
-                    return;
-                }
-
-                const j = await r.json();
-                if (j.code === 200) {
-                    el.textContent = "服务正常";
-                    el.style.background = "rgba(0,210,110,0.2)";
-                } else {
-                    el.textContent = "服务异常";
-                    el.style.background = "rgba(255,70,70,0.2)";
-                }
-            } catch (e) {
-                console.error("健康检查失败：", e);
-                el.textContent = "服务未启动";
-                el.style.background = "rgba(255,70,70,0.2)";
-            }
-        }
-
-        async function sendQuestion() {
-            const input = document.getElementById("question-input");
-            const btn = document.getElementById("send-btn");
-            const deepBtn = document.getElementById("deep-btn");
-            const adminBtn = document.getElementById("admin-btn");
-            const chat = document.getElementById("chat-messages");
-
-            const q = input.value.trim();
-            if (!q || isRequesting) return;
-
-            const chatContainer = document.getElementById("chat-container");
-            if (chatContainer.classList.contains("start-mode")) {
-                chatContainer.classList.remove("start-mode");
-                chatContainer.classList.add("chat-active");
-            }
-
-            input.placeholder = "请输入你的问题";
-
-            currentConversation.push({
-                role: "user",
-                content: q
-            });
-
-            isRequesting = true;
-            btn.disabled = true;
-            input.disabled = true;
-            input.value = "";
-
-            const isDeep = deepBtn.classList.contains("active");
-            const isAdminMode = isAdmin && adminBtn.classList.contains("active");
-
-            chat.innerHTML += `
-            <div class="user-message message">
-                <div class="bubble">${escapeHtml(q)}</div>
-            </div>`;
-
-            const loadingId = "loading-" + Date.now();
-            let loadingText = isDeep ? "深度思考中......" : "AI 思考中......";
-            if (isAdminMode) loadingText = "管理员模式 - " + loadingText;
-            chat.innerHTML += `<div id="${loadingId}" class="loading">${loadingText}</div>`;
-            scrollChatToBottom();
-
-            try {
-                const params = new URLSearchParams();
-                params.set("question", q);
-                if (isDeep) params.set("deep", "true");
-                if (isAdminMode) params.set("admin", "true");
-                if (token) params.set("token", token);
-
-                // 登录用户继续已有对话档案时才传 conversationId；新对话不传，让后端自动创建。
-                // 管理员模式按后端说明暂不接入 conversation_message，所以不传 conversationId。
-                if (token && currentConversationId && !isAdminMode) {
-                    params.set("conversationId", currentConversationId);
-                }
-
-                const ctrl = new AbortController();
-                const timer = setTimeout(() => ctrl.abort(), 15000);
-                const res = await fetch(`${BASE_URL}/question/ask?${params.toString()}`, {
-                    signal: ctrl.signal,
-                    method: "GET",
-                    headers: {
-                        "Accept": "application/json"
-                    }
-                });
-                clearTimeout(timer);
-
-                if (!res.ok) {
-                    throw new Error(`请求失败：${res.status} ${res.statusText}`);
-                }
-
-                const result = await res.json();
-
-                const loadingEl = document.getElementById(loadingId);
-                if (loadingEl) loadingEl.remove();
-
-                let answer = "";
-
-                if (result.code === 200) {
-                if (result.data && typeof result.data === "object") {
-                    answer = result.data.answer || "暂无相关回答，可简化问题重试";
-
-                    if (token && !isAdminMode && result.data.conversationId) {
-                        const isFirstBackendConversationId = !currentConversationId;
-                        currentConversationId = result.data.conversationId;
-
-                        if (isFirstBackendConversationId) {
-                            await updateConversationTitle(currentConversationId, q);
-                        }
-                    }
-                } else {
-                    answer = result.data || "暂无相关回答，可简化问题重试";
-                }
-            } else {
-                answer = result.msg || "请求失败，请重试";
-            }
-
-                const ans = formatAnswerWithSuffix(answer);
-
-                chat.innerHTML += `
-                    <div class="ai-message message">
-                        <div class="bubble no-bg">
-                            ${renderMarkdownToHtml(ans.text)}
-                            ${ans.suffix ? `<div class="bubble-suffix">${escapeHtml(ans.suffix)}</div>` : ""}
-                        </div>
-                    </div>`;
-
-                currentConversation.push({
-                    role: "assistant",
-                    content: String(answer)
-                });
-
-                if (token) {
-                    await loadUserHistory();
-                }
-
-            } catch (err) {
-                const loadingEl = document.getElementById(loadingId);
-                if (loadingEl) loadingEl.remove();
-
-                const msg = err.name === "AbortError"
-                    ? "请求超时（管理员模式处理可能需要更长时间），请重试"
-                    : `请求失败：${err.message}`;
-
-                chat.innerHTML += `
-                <div class="ai-message message">
-                    <div class="bubble no-bg">
-                        <div class="markdown error-markdown">${escapeHtml(msg)}</div>
+            <div class="settings-content">
+                <div id="settings-theme-panel" class="settings-panel">
+                    <div class="settings-panel-title">设置主题</div>
+                    <div class="settings-panel-desc">选择你喜欢的页面主题。</div>
+                    <div class="theme-options">
+                        <button type="button" class="theme-option-btn active" onclick="selectThemeOption('light')">浅色主题</button>
+                        <button type="button" class="theme-option-btn" onclick="selectThemeOption('dark')">深色主题</button>
                     </div>
-                </div>`;
-                console.error("发送问题失败：", err);
-            } finally {
-                isRequesting = false;
-                btn.disabled = false;
-                input.disabled = false;
-                input.focus();
-                scrollChatToBottom();
-            }
-        }
+                </div>
+            </div>
+        </div>
+    </section>
 
-        function showRenameModal(index) {
-            const data = conversations[index];
+    <div id="greeting" class="greeting-text"></div>
 
-            if (!token) {
-                alert("请先登录");
-                return;
-            }
+    <div class="input-area">
+        <div class="input-wrapper">
+            <textarea id="question-input" placeholder="你好！我是华南理工校园百事通，有任何校园问题都可以问我～"></textarea>
+            <div class="option-buttons">
+                <button type="button" class="option-btn" id="deep-btn" onclick="toggleDeepSearch()">深度思考</button>
+                <button type="button" class="option-btn admin-hidden" id="admin-btn" onclick="toggleAdminMode()">管理员模式</button>
+            </div>
+            <button id="send-btn" onclick="sendQuestion()">发送</button>
+        </div>
+    </div>
+</main>
 
-            if (!data || !data.conversationId) {
-                alert("未找到该历史记录");
-                return;
-            }
+<div id="rename-modal" class="modal rename-modal hidden">
+    <div class="modal-content">
+        <div class="modal-title">重命名对话</div>
+        <div class="form-item">
+            <label for="rename-title-input">新的对话标题</label>
+            <input id="rename-title-input" type="text" maxlength="50" placeholder="请输入新的对话标题">
+            <div id="rename-title-err" class="error-msg"></div>
+        </div>
+        <div class="modal-btns">
+            <button class="modal-btn cancel-btn" onclick="hideRenameModal()">取消</button>
+            <button class="modal-btn primary-btn" onclick="confirmRenameConversation()">确定</button>
+        </div>
+    </div>
+</div>
 
-            renamingHistoryIndex = index;
+<div id="login-modal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-title">用户登录</div>
+        <div class="form-item">
+            <label for="login-username">用户名</label>
+            <input id="login-username" type="text" placeholder="3-20位英文/数字/下划线" autocomplete="username">
+            <div id="login-username-err" class="error-msg"></div>
+        </div>
+        <div class="form-item">
+            <label for="login-password">密码</label>
+            <input id="login-password" type="password" placeholder="至少6位字符" autocomplete="current-password">
+            <div id="login-password-err" class="error-msg"></div>
+        </div>
+        <div id="login-err" class="error-msg"></div>
+        <div class="modal-btns">
+            <button class="modal-btn cancel-btn" onclick="hideLoginModal()">取消</button>
+            <button class="modal-btn primary-btn" onclick="doLogin()">登录</button>
+        </div>
+        <div class="register-link">
+            <span onclick="switchToRegister()">如没有账号，请先注册</span>
+        </div>
+    </div>
+</div>
 
-            const modal = document.getElementById("rename-modal");
-            const input = document.getElementById("rename-title-input");
-            const err = document.getElementById("rename-title-err");
+<div id="register-modal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-title">用户注册</div>
+        <div class="form-item">
+            <label for="register-username">用户名</label>
+            <input id="register-username" type="text" placeholder="3-20位英文/数字/下划线" autocomplete="username">
+            <div id="register-username-err" class="error-msg"></div>
+        </div>
+        <div class="form-item">
+            <label for="register-password">密码</label>
+            <input id="register-password" type="password" placeholder="至少6位字符" autocomplete="new-password">
+            <div id="register-password-err" class="error-msg"></div>
+        </div>
+        <div id="register-err" class="error-msg"></div>
+        <div class="modal-btns">
+            <button class="modal-btn cancel-btn" onclick="hideRegisterModal()">取消</button>
+            <button class="modal-btn primary-btn" onclick="doRegister()">注册</button>
+        </div>
+        <div class="register-link login-link">
+            <span onclick="switchToLogin()">登录</span>
+        </div>
+    </div>
+</div>
 
-            if (!modal || !input || !err) return;
+<script>
+const BASE_URL = "https://backup.u850688.nyat.app:54767";
+const SIDEBAR_WIDTH = 260;
+const MIN_CHAT_WIDTH_AFTER_PUSH = 720;
+const USERNAME_REG = /^[a-zA-Z0-9_]{3,20}$/;
 
-            err.textContent = "";
+let isRequesting = false;
+let token = localStorage.getItem("token") || "";
+let username = localStorage.getItem("username") || "";
+let isAdmin = localStorage.getItem("isAdmin") === "true" || localStorage.getItem("admin") === "true";
+let conversations = [];
+let currentConversation = [];
+let currentConversationId = "";
+let openedHistoryMenuIndex = null;
+let renamingHistoryIndex = null;
+let toastTimer = null;
+let chatScrollTimer = null;
+let lockedHistoryScrollTop = 0;
 
-            input.value = data.title || "新对话";
+const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+const byId = (id) => document.getElementById(id);
 
-            modal.classList.remove("hidden");
+function showToast(message) {
+    const toast = byId("toast-message");
+    if (!toast) return;
+    toast.textContent = message;
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+}
 
-            setTimeout(() => {
-                input.focus();
-                input.select();
-            }, 0);
-        }
+function setConversationTitle(title) {
+    const titleEl = byId("conversation-title");
+    if (titleEl) titleEl.innerText = title || "新对话";
+}
 
-        function hideRenameModal() {
-            const modal = document.getElementById("rename-modal");
-            const input = document.getElementById("rename-title-input");
-            const err = document.getElementById("rename-title-err");
+function escapeHtml(text) {
+    return String(text || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
 
-            if (modal) {
-                modal.classList.add("hidden");
-            }
+function applyTheme(themeName, showMessage = false) {
+    const safeTheme = themeName === "dark" ? "dark" : "light";
+    document.body.classList.toggle("light-theme", safeTheme === "light");
+    localStorage.setItem("themeMode", safeTheme);
+    updateThemeOptionButtons(safeTheme);
+    if (showMessage) showToast(safeTheme === "light" ? "已切换为浅色主题" : "已切换为深色主题");
+}
 
-            if (input) {
-                input.value = "";
-            }
+function updateThemeOptionButtons(themeName) {
+    $$(".theme-option-btn").forEach(btn => {
+        const text = btn.textContent.trim();
+        btn.classList.toggle("active",
+            (themeName === "light" && text.includes("浅色")) ||
+            (themeName === "dark" && text.includes("深色"))
+        );
+    });
+}
 
-            if (err) {
-                err.textContent = "";
-            }
+function selectThemeOption(themeName) {
+    applyTheme(themeName, true);
+}
 
-            renamingHistoryIndex = null;
+function updateSidebarPushMode() {
+    const sidebar = byId("sidebar");
+    const isSidebarOpen = sidebar && sidebar.classList.contains("open");
+    const canPushChat = window.innerWidth - SIDEBAR_WIDTH >= MIN_CHAT_WIDTH_AFTER_PUSH;
+    document.body.classList.toggle("sidebar-push", !!isSidebarOpen && canPushChat);
+}
 
-            /*
-            保持原 prompt 逻辑：
-            用户取消重命名时，关闭历史记录右侧菜单。
-            */
-            closeHistoryMenus();
-        }
+function updateGreeting() {
+    const greetingEl = byId("greeting");
+    if (!greetingEl) return;
 
-        async function confirmRenameConversation() {
-            const index = renamingHistoryIndex;
-            const data = conversations[index];
+    const hour = new Date().getHours();
+    let timeGreeting = "凌晨好";
+    if (hour >= 6 && hour < 12) timeGreeting = "上午好";
+    else if (hour >= 12 && hour < 14) timeGreeting = "中午好";
+    else if (hour >= 14 && hour < 18) timeGreeting = "下午好";
+    else if (hour >= 18 && hour < 24) timeGreeting = "晚上好";
 
-            const input = document.getElementById("rename-title-input");
-            const err = document.getElementById("rename-title-err");
+    const name = username ? `${username}同学` : "同学";
+    greetingEl.textContent = `${timeGreeting}，${name}`;
+}
 
-            if (!input || !err) return;
+function getAvatarText() {
+    return token && username ? username.trim().charAt(0).toUpperCase() : "游";
+}
 
-            if (!token) {
-                alert("请先登录");
-                return;
-            }
+function clearUserInfo() {
+    token = "";
+    username = "";
+    isAdmin = false;
+    ["token", "username", "isAdmin", "admin", "deepSearchEnabled"].forEach(key => localStorage.removeItem(key));
+}
 
-            if (!data || !data.conversationId) {
-                err.textContent = "未找到该历史记录";
-                return;
-            }
+function saveUserInfo() {
+    localStorage.setItem("token", token);
+    localStorage.setItem("username", username);
+    localStorage.setItem("isAdmin", String(isAdmin));
+    localStorage.setItem("admin", String(isAdmin));
+}
 
-            const title = input.value.trim();
+function initUserStatus() {
+    const adminBtn = byId("admin-btn");
+    if (adminBtn) {
+        adminBtn.classList.toggle("admin-hidden", !(token && isAdmin));
+        if (!(token && isAdmin)) adminBtn.classList.remove("active");
+    }
+    updateSidebarUserInfo();
+}
 
-            if (!title) {
-                err.textContent = "标题不能为空";
-                input.focus();
-                return;
-            }
+function updateSidebarUserInfo() {
+    const avatarText = getAvatarText();
+    const displayName = token ? (username || "已登录用户") : "未登录";
 
-            if (title.length > 50) {
-                err.textContent = "标题不能超过 50 个字符";
-                input.focus();
-                return;
-            }
+    const sidebarAvatar = byId("sidebar-user-avatar");
+    const sidebarName = byId("sidebar-user-name");
+    const profileAvatar = byId("profile-avatar");
+    const profileName = byId("profile-name");
+    const profileLoginStatus = byId("profile-login-status");
+    const profileAdminStatus = byId("profile-admin-status");
 
-            try {
-                const params = new URLSearchParams();
-                params.set("token", token);
-                params.set("conversationId", data.conversationId);
-                params.set("title", title);
+    if (sidebarAvatar) sidebarAvatar.textContent = avatarText;
+    if (sidebarName) sidebarName.textContent = displayName;
+    if (profileAvatar) profileAvatar.textContent = avatarText;
+    if (profileName) profileName.textContent = displayName;
+    if (profileLoginStatus) profileLoginStatus.textContent = token ? "当前状态：已登录" : "当前状态：未登录";
+    if (profileAdminStatus) profileAdminStatus.textContent = isAdmin ? "权限：管理员" : "权限：普通用户";
 
-                const res = await fetch(`${BASE_URL}/conversation/title?${params.toString()}`, {
-                    method: "POST"
-                });
+    renderSidebarUserMenu();
+}
 
-                if (!res.ok) {
-                    throw new Error(`重命名接口响应失败：${res.status}`);
-                }
+function createMenuButton(text, className, handler) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = className;
+    btn.textContent = text;
+    btn.onclick = handler;
+    return btn;
+}
 
-                const result = await res.json();
+function renderSidebarUserMenu() {
+    const menu = byId("sidebar-user-menu");
+    if (!menu) return;
+    menu.innerHTML = "";
 
-                if (result.code !== 200) {
-                    err.textContent = result.msg || "重命名失败";
-                    return;
-                }
-
-                /*
-                先记录当前历史记录滚动位置。
-                这样重命名完成后，即使重新渲染历史记录列表，
-                也可以把滚动条恢复到原来的位置。
-                */
-                const historyScrollArea = document.querySelector(".history-scroll-area");
-                const keepHistoryScrollTop = historyScrollArea
-                    ? historyScrollArea.scrollTop
-                    : 0;
-
-                const modal = document.getElementById("rename-modal");
-                if (modal) {
-                    modal.classList.add("hidden");
-                }
-
-                renamingHistoryIndex = null;
-
-                closeHistoryMenus();
-
-                // 更新本地标题，避免界面延迟
-                data.title = title;
-
-                // 如果当前打开的就是这个对话，同步更新顶部标题
-                if (data.conversationId === currentConversationId) {
-                    setConversationTitle(title);
-                }
-
-                /*
-                不要在重命名完成后立即 await loadUserHistory();
-                否则后端返回顺序可能变化，或者滚动位置被重置。
-                这里直接用本地 conversations 重新渲染，保持历史记录原有顺序。
-                */
-                renderHistoryList();
-
-                /*
-                恢复历史记录滚动位置。
-                requestAnimationFrame 是为了等 renderHistoryList() 完成 DOM 更新后再恢复。
-                */
-                const newHistoryScrollArea = document.querySelector(".history-scroll-area");
-                if (newHistoryScrollArea) {
-                    newHistoryScrollArea.scrollTop = keepHistoryScrollTop;
-
-                    requestAnimationFrame(() => {
-                        newHistoryScrollArea.scrollTop = keepHistoryScrollTop;
-                    });
-                }
-            } catch (errObj) {
-                console.error("重命名历史记录失败：", errObj);
-                err.textContent = "重命名失败，请稍后重试";
-            }
-        }
-
-        function showLoginModal() {
-            document.getElementById("login-modal").classList.remove("hidden");
-        }
-
-        function hideLoginModal() {
-            document.getElementById("login-modal").classList.add("hidden");
-            clearLoginErrors();
-        }
-
-        function clearLoginErrors() {
-            document.getElementById("login-username-err").textContent = "";
-            document.getElementById("login-password-err").textContent = "";
-            document.getElementById("login-err").textContent = "";
-        }
-
-        function showRegisterModal() {
-            document.getElementById("register-modal").classList.remove("hidden");
-        }
-
-        function hideRegisterModal() {
-            document.getElementById("register-modal").classList.add("hidden");
-            clearRegisterErrors();
-        }
-
-        function clearRegisterErrors() {
-            document.getElementById("register-username-err").textContent = "";
-            document.getElementById("register-password-err").textContent = "";
-            document.getElementById("register-err").textContent = "";
-        }
-
-        function switchToRegister() {
-            hideLoginModal();
-            showRegisterModal();
-        }
-
-        function switchToLogin() {
-            hideRegisterModal();
+    if (!token) {
+        menu.appendChild(createMenuButton("登录", "sidebar-user-menu-item", (e) => {
+            e.stopPropagation();
+            closeUserMenu();
             showLoginModal();
-        }
+        }));
+        return;
+    }
 
-        async function doLogin() {
-            const usernameEl = document.getElementById("login-username");
-            const passwordEl = document.getElementById("login-password");
-            const usernameVal = usernameEl.value.trim();
-            const passwordVal = passwordEl.value.trim();
-            let hasError = false;
+    menu.appendChild(createMenuButton("个人信息", "sidebar-user-menu-item", (e) => {
+        e.stopPropagation();
+        closeUserMenu();
+        openProfilePage();
+    }));
 
-            clearLoginErrors();
-            const usernameReg = /^[a-zA-Z0-9_]{3,20}$/;
-            if (!usernameVal) {
-                document.getElementById("login-username-err").textContent = "请输入用户名";
-                hasError = true;
-            } else if (!usernameReg.test(usernameVal)) {
-                document.getElementById("login-username-err").textContent = "用户名只能包含英文、数字、下划线，长度3-20位";
-                hasError = true;
-            }
-            if (!passwordVal) {
-                document.getElementById("login-password-err").textContent = "请输入密码";
-                hasError = true;
-            } else if (passwordVal.length < 6) {
-                document.getElementById("login-password-err").textContent = "密码长度至少6位";
-                hasError = true;
-            }
-            if (hasError) return;
+    menu.appendChild(createMenuButton("设置", "sidebar-user-menu-item", (e) => {
+        e.stopPropagation();
+        closeUserMenu();
+        openSettingsPage();
+    }));
 
-            try {
-                const res = await fetch(`${BASE_URL}/user/login`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-                    body: JSON.stringify({
-                        username: usernameVal,
-                        password: passwordVal
-                    })
-                });
+    menu.appendChild(createMenuButton("退出登录", "sidebar-user-menu-item danger", (e) => {
+        e.stopPropagation();
+        closeUserMenu();
+        logout();
+    }));
+}
 
-                if (!res.ok) {
-                    throw new Error(`登录接口响应失败：${res.status}`);
-                }
+function setSidebarUserMenuPosition(menu) {
+    const sidebar = byId("sidebar");
+    const userBtn = $(".sidebar-user-btn");
+    if (!menu || !userBtn) return;
 
-                const result = await res.json();
+    const btnRect = userBtn.getBoundingClientRect();
+    const sidebarRect = sidebar ? sidebar.getBoundingClientRect() : { left: 0, top: 0 };
+    const menuWidth = menu.offsetWidth || 118;
+    const menuHeight = menu.offsetHeight || 96;
+    const gap = 6;
 
-                if (result.code === 200) {
-                    token = result.data.token || "";
-                    username = result.data.username || "";
-                    isAdmin = result.data.admin || false;
+    let left = Math.max(sidebarRect.left + 12, btnRect.right - menuWidth);
+    if (left + menuWidth + gap > window.innerWidth) {
+        left = Math.max(gap, window.innerWidth - menuWidth - gap);
+    }
 
-                    localStorage.setItem("token", token);
-                    localStorage.setItem("username", username);
-                    localStorage.setItem("isAdmin", isAdmin);
-                    localStorage.setItem("admin", isAdmin);
+    let top = Math.max(sidebarRect.top + gap, btnRect.top - menuHeight - gap);
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+}
 
-                    conversations = [];
-                    currentConversation = [];
-                    currentConversationId = "";
+function toggleUserMenu(event) {
+    if (event) event.stopPropagation();
 
-                    hideLoginModal();
-                    updateSidebarUserInfo();
-                    initUserStatus();
-                    updateGreeting();
-                    await loadUserHistory();
-                    showToast("登录成功");
-                } else {
-                    document.getElementById("login-err").textContent =
-                        result.msg || "登录失败，请重试";
-                }
-            } catch (err) {
-                console.error("登录请求失败：", err);
-                document.getElementById("login-err").textContent = "网络异常或服务未响应，请重试";
-            }
-        }
+    const menu = byId("sidebar-user-menu");
+    if (!menu) return;
 
-        async function doRegister() {
-            const usernameEl = document.getElementById("register-username");
-            const passwordEl = document.getElementById("register-password");
-            const usernameVal = usernameEl.value.trim();
-            const passwordVal = passwordEl.value.trim();
-            let hasError = false;
+    const isUserMenuOpen = !menu.classList.contains("hidden");
+    const isHistoryMenuOpen = openedHistoryMenuIndex !== null || !!$(".history-menu");
 
-            clearRegisterErrors();
-            const usernameReg = /^[a-zA-Z0-9_]{3,20}$/;
-            if (!usernameVal) {
-                document.getElementById("register-username-err").textContent = "请输入用户名";
-                hasError = true;
-            } else if (!usernameReg.test(usernameVal)) {
-                document.getElementById("register-username-err").textContent = "用户名只能包含英文、数字、下划线，长度3-20位";
-                hasError = true;
-            }
-            if (!passwordVal) {
-                document.getElementById("register-password-err").textContent = "请输入密码";
-                hasError = true;
-            } else if (passwordVal.length < 6) {
-                document.getElementById("register-password-err").textContent = "密码长度至少6位";
-                hasError = true;
-            }
-            if (hasError) return;
+    if (isHistoryMenuOpen) {
+        closeHistoryMenus();
+        return;
+    }
 
-            try {
-                const res = await fetch(`${BASE_URL}/user/register`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-                    body: JSON.stringify({
-                        username: usernameVal,
-                        password: passwordVal
-                    })
-                });
+    if (isUserMenuOpen) {
+        closeUserMenu();
+        return;
+    }
 
-                if (!res.ok) {
-                    throw new Error(`注册接口响应失败：${res.status}`);
-                }
+    menu.style.visibility = "hidden";
+    menu.classList.remove("hidden");
+    setSidebarUserMenuPosition(menu);
+    menu.style.visibility = "";
+}
 
-                const result = await res.json();
+function closeUserMenu() {
+    const menu = byId("sidebar-user-menu");
+    if (!menu) return;
+    menu.classList.add("hidden");
+    menu.style.visibility = "";
+}
 
-                if (result.code === 200) {
-                    alert("注册成功，请登录！");
-                    switchToLogin();
-                } else {
-                    document.getElementById("register-err").textContent =
-                        result.msg || "注册失败，请更换用户名重试";
-                }
-            } catch (err) {
-                console.error("注册请求失败：", err);
-                document.getElementById("register-err").textContent = "网络异常或服务未响应，请重试";
-            }
-        }
+function showChatView() {
+    const chatMessages = byId("chat-messages");
+    const inputArea = $(".input-area");
+    const profilePage = byId("profile-page");
+    const settingsPage = byId("settings-page");
 
-        function logout() {
+    if (profilePage) profilePage.style.display = "none";
+    if (settingsPage) settingsPage.style.display = "none";
+    if (chatMessages) chatMessages.style.display = "";
+    if (inputArea) inputArea.style.display = "";
+}
+
+function openProfilePage(event) {
+    if (event) event.stopPropagation();
+    closeUserMenu();
+    closeHistoryMenus();
+
+    const chatContainer = byId("chat-container");
+    const chatMessages = byId("chat-messages");
+    const inputArea = $(".input-area");
+    const profilePage = byId("profile-page");
+    const settingsPage = byId("settings-page");
+
+    if (chatMessages) chatMessages.style.display = "none";
+    if (inputArea) inputArea.style.display = "none";
+    if (settingsPage) settingsPage.style.display = "none";
+    if (profilePage) profilePage.style.display = "flex";
+    if (chatContainer) chatContainer.classList.remove("start-mode", "chat-active");
+
+    setConversationTitle("个人信息");
+    updateSidebarUserInfo();
+}
+
+function closeProfilePage(restoreChat = true) {
+    const profilePage = byId("profile-page");
+    if (profilePage) profilePage.style.display = "none";
+    if (restoreChat) showChatView();
+}
+
+function openSettingsPage(event) {
+    if (event) event.stopPropagation();
+    closeUserMenu();
+    closeHistoryMenus();
+
+    const chatContainer = byId("chat-container");
+    const chatMessages = byId("chat-messages");
+    const inputArea = $(".input-area");
+    const profilePage = byId("profile-page");
+    const settingsPage = byId("settings-page");
+
+    if (chatMessages) chatMessages.style.display = "none";
+    if (inputArea) inputArea.style.display = "none";
+    if (profilePage) profilePage.style.display = "none";
+    if (settingsPage) settingsPage.style.display = "flex";
+    if (chatContainer) chatContainer.classList.remove("start-mode", "chat-active");
+
+    setConversationTitle("设置");
+}
+
+function closeSettingsPage(restoreChat = true) {
+    const settingsPage = byId("settings-page");
+    if (settingsPage) settingsPage.style.display = "none";
+    if (restoreChat) showChatView();
+}
+
+function showSettingsPanel(panelName) {
+    $$(".settings-nav-btn").forEach(btn => {
+        btn.classList.toggle("active", panelName === "theme" && btn.textContent.trim() === "设置主题");
+    });
+    const themePanel = byId("settings-theme-panel");
+    if (themePanel) themePanel.style.display = panelName === "theme" ? "block" : "none";
+}
+
+async function checkBackendHealth() {
+    const el = byId("health-status");
+    if (!el) return;
+
+    try {
+        const res = await fetch(`${BASE_URL}/health`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        const ok = data.code === 200;
+        el.textContent = ok ? "服务正常" : "服务异常";
+        el.style.background = ok ? "rgba(0,210,110,.2)" : "rgba(255,70,70,.2)";
+    } catch (err) {
+        console.error("健康检查失败：", err);
+        el.textContent = "服务未启动";
+        el.style.background = "rgba(255,70,70,.2)";
+    }
+}
+
+async function checkTokenValid() {
+    if (!token) return;
+
+    try {
+        const res = await fetch(`${BASE_URL}/user/me?token=${encodeURIComponent(token)}`);
+        if (!res.ok) throw new Error(`Token 验证接口响应失败：${res.status}`);
+
+        const result = await res.json();
+        if (result.code !== 200) {
+            console.warn("Token 已失效：", result.msg);
             clearUserInfo();
             conversations = [];
             currentConversation = [];
@@ -2584,827 +993,1008 @@
             initUserStatus();
             updateGreeting();
             renderHistoryList();
-            createNewChat();
-            showToast("已退出登录");
+            return;
         }
 
-        function createNewChat(){
-            closeProfilePage();
-            closeHistoryMenus();
-
-            currentConversation = [];
-            currentConversationId = "";
-
-            document
-                .getElementById("chat-container")
-                .classList
-                .remove("chat-active");
-
-            document
-                .getElementById("chat-container")
-                .classList
-                .add("start-mode");
-
-            document.getElementById("chat-messages").innerHTML = "";
-
-            const input = document.getElementById("question-input");
-            input.value = "";
-            input.placeholder = "你好！我是华南理工校园百事通，有任何校园问题都可以问我～";
-            input.focus();
-            setConversationTitle("新对话");
-
-            if (token) {
-                loadUserHistory();
-            }
+        if (result.data) {
+            username = result.data.username || username;
+            isAdmin = result.data.admin === true;
+            saveUserInfo();
         }
 
-        function toggleSidebar(){
-            /*
-            如果历史记录菜单或个人信息菜单正在打开，
-            点击左上角按钮时只关闭菜单，不折叠左侧大折叠栏。
-            */
-            const userMenu = document.getElementById("sidebar-user-menu");
+        initUserStatus();
+        updateGreeting();
+        await loadUserHistory();
+    } catch (err) {
+        console.error("Token 验证异常，保留本地登录信息：", err);
+        initUserStatus();
+        updateGreeting();
+        renderHistoryList();
+    }
+}
 
-            const isHistoryMenuOpen =
-                openedHistoryMenuIndex !== null ||
-                document.querySelector(".history-menu");
+function appendUserMessage(content) {
+    const chat = byId("chat-messages");
+    if (!chat) return;
+    chat.insertAdjacentHTML("beforeend", `
+        <div class="user-message message">
+            <div class="bubble">${escapeHtml(content)}</div>
+        </div>
+    `);
+}
 
-            const isUserMenuOpen =
-                userMenu && !userMenu.classList.contains("hidden");
+function appendAiMessage(answer) {
+    const chat = byId("chat-messages");
+    if (!chat) return;
 
-            if (isHistoryMenuOpen || isUserMenuOpen) {
-                closeHistoryMenus();
-                closeUserMenu();
-                return;
-            }
+    const ans = formatAnswerWithSuffix(answer);
+    chat.insertAdjacentHTML("beforeend", `
+        <div class="ai-message message">
+            <div class="bubble no-bg">
+                ${renderMarkdownToHtml(ans.text)}
+                ${ans.suffix ? `<div class="bubble-suffix">${escapeHtml(ans.suffix)}</div>` : ""}
+            </div>
+        </div>
+    `);
+}
 
-            const sidebar = document.getElementById("sidebar");
+async function sendQuestion() {
+    const input = byId("question-input");
+    const btn = byId("send-btn");
+    const deepBtn = byId("deep-btn");
+    const adminBtn = byId("admin-btn");
+    const chat = byId("chat-messages");
+    const chatContainer = byId("chat-container");
+    if (!input || !btn || !deepBtn || !adminBtn || !chat || !chatContainer) return;
 
-            sidebar.classList.toggle("open");
+    const q = input.value.trim();
+    if (!q || isRequesting) return;
 
-            document.body.classList.toggle(
-                "sidebar-open",
-                sidebar.classList.contains("open")
-            );
+    showChatView();
 
-            updateSidebarPushMode();
-        }
+    if (chatContainer.classList.contains("start-mode")) {
+        chatContainer.classList.remove("start-mode");
+        chatContainer.classList.add("chat-active");
+    }
 
-        document.addEventListener("click", function(event) {
-            const sidebar = document.getElementById("sidebar");
+    input.placeholder = "请输入你的问题";
+    currentConversation.push({ role: "user", content: q });
 
-            const clickedHistoryMenu = event.target.closest(".history-menu");
-            const clickedHistoryMoreBtn = event.target.closest(".history-more-btn");
-            const clickedSidebarUserMenu = event.target.closest(".sidebar-user-menu");
-            const clickedSidebarUserBtn = event.target.closest(".sidebar-user-btn");
+    isRequesting = true;
+    btn.disabled = true;
+    input.disabled = true;
+    input.value = "";
 
-            const clickedInsideSidebar = sidebar && sidebar.contains(event.target);
+    const isDeep = deepBtn.classList.contains("active");
+    const isAdminMode = isAdmin && adminBtn.classList.contains("active");
 
-            /*
-            1. 点击历史记录右侧弹出的菜单本身：
-            不由全局点击事件关闭。
-            里面的“重命名 / 删除”按钮继续走它们自己的 onclick。
-            */
-            if (clickedHistoryMenu) {
-                return;
-            }
+    appendUserMessage(q);
 
-            /*
-            2. 点击历史记录右侧三个点按钮：
-            不由全局点击事件处理。
-            因为三个点按钮自己的 onclick 会负责打开 / 切换 / 关闭菜单。
-            */
-            if (clickedHistoryMoreBtn) {
-                return;
-            }
+    const loadingId = `loading-${Date.now()}`;
+    let loadingText = isDeep ? "深度思考中......" : "AI 思考中......";
+    if (isAdminMode) loadingText = `管理员模式 - ${loadingText}`;
+    chat.insertAdjacentHTML("beforeend", `<div id="${loadingId}" class="loading">${loadingText}</div>`);
+    scrollChatToBottom();
 
-            /*
-            3. 点击左侧用户菜单或用户按钮：
-            保持原来的用户菜单逻辑。
-            toggleUserMenu() 里面已经会 closeHistoryMenus()。
-            */
-            if (clickedSidebarUserMenu || clickedSidebarUserBtn) {
-                return;
-            }
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), isAdminMode ? 45000 : 20000);
 
-            /*
-            4. 点击左侧大折叠栏内部：
-            允许原本的按钮逻辑先执行。
-            比如点击“新对话”、历史记录项等，它们的 onclick 会正常触发。
-            然后这里负责关闭历史记录右侧菜单。
-            */
-            if (clickedInsideSidebar) {
-                closeHistoryMenus();
-                closeUserMenu();
-                return;
-            }
+    try {
+        const params = new URLSearchParams();
+        params.set("question", q);
+        if (isDeep) params.set("deep", "true");
+        if (isAdminMode) params.set("admin", "true");
+        if (token) params.set("token", token);
+        if (token && currentConversationId && !isAdminMode) params.set("conversationId", currentConversationId);
 
-            /*
-            5. 点击左侧大折叠栏以外的任何地方：
-            只关闭菜单，不触发左侧栏功能。
-            */
-            closeHistoryMenus();
-            closeUserMenu();
+        const res = await fetch(`${BASE_URL}/question/ask?${params.toString()}`, {
+            signal: ctrl.signal,
+            method: "GET",
+            headers: { "Accept": "application/json" }
         });
 
-        function renderHistoryList(){
-            const list = document.getElementById("history-list");
-            list.innerHTML = "";
+        clearTimeout(timer);
+        if (!res.ok) throw new Error(`请求失败：${res.status} ${res.statusText}`);
 
-            if(!token) return;
+        const result = await res.json();
+        byId(loadingId)?.remove();
 
-            conversations.forEach((item,index)=>{
-                const div = document.createElement("div");
-                div.className = "history-record";
-
-                // 如果这条历史记录就是当前打开的对话，则保持紫色选中状态
-                if (item.conversationId && item.conversationId === currentConversationId) {
-                    div.classList.add("selected");
+        let answer = "";
+        if (result.code === 200) {
+            if (result.data && typeof result.data === "object") {
+                answer = result.data.answer || "暂无相关回答，可简化问题重试";
+                if (token && !isAdminMode && result.data.conversationId) {
+                    const isFirstBackendConversationId = !currentConversationId;
+                    currentConversationId = result.data.conversationId;
+                    if (isFirstBackendConversationId) await updateConversationTitle(currentConversationId, q);
                 }
-
-                // 点击整条历史记录，打开该对话
-                div.onclick = () => openConversation(index);
-
-                // 历史记录标题文字
-                const titleSpan = document.createElement("span");
-                titleSpan.className = "history-record-title";
-                titleSpan.innerText = item.title || "新对话";
-
-                // 右侧三个点按钮
-                const moreBtn = document.createElement("button");
-                moreBtn.type = "button";
-                moreBtn.className = "history-more-btn";
-                moreBtn.innerHTML = "⋯";
-                moreBtn.title = "更多操作";
-
-                // 点击三个点按钮时，不触发打开对话
-                moreBtn.onclick = (event) => {
-                    event.stopPropagation();
-                    toggleHistoryMenu(index, div);
-                };
-
-                div.appendChild(titleSpan);
-                div.appendChild(moreBtn);
-
-                list.appendChild(div);
-            });
-        }
-
-        function lockHistoryScroll() {
-            const historyScrollArea = document.querySelector(".history-scroll-area");
-            if (historyScrollArea) {
-                lockedHistoryScrollTop = historyScrollArea.scrollTop;
-                historyScrollArea.classList.add("scroll-locked");
-            }
-        }
-
-        function unlockHistoryScroll() {
-            const historyScrollArea = document.querySelector(".history-scroll-area");
-            if (historyScrollArea) {
-                historyScrollArea.classList.remove("scroll-locked");
-            }
-
-            lockedHistoryScrollTop = 0;
-        }
-
-        function closeHistoryMenus() {
-            openedHistoryMenuIndex = null;
-
-            document.querySelectorAll(".history-menu").forEach(menu => {
-                menu.remove();
-            });
-
-            document.querySelectorAll(".history-record.menu-open").forEach(record => {
-                record.classList.remove("menu-open");
-            });
-
-            // 菜单关闭后，恢复历史记录滚动
-            unlockHistoryScroll();
-        }
-
-        function setHistoryMenuDirection(recordEl, menu) {
-            const sidebar = document.getElementById("sidebar");
-            const userArea = document.querySelector(".sidebar-user-area");
-            const scrollArea = recordEl.closest(".history-scroll-area");
-            const moreBtn = recordEl.querySelector(".history-more-btn");
-
-            const recordRect = recordEl.getBoundingClientRect();
-            const btnRect = moreBtn
-                ? moreBtn.getBoundingClientRect()
-                : recordRect;
-
-            const sidebarRect = sidebar
-                ? sidebar.getBoundingClientRect()
-                : { left: 0, right: 260, top: 0, bottom: window.innerHeight };
-
-            const userAreaRect = userArea
-                ? userArea.getBoundingClientRect()
-                : null;
-
-            const scrollAreaRect = scrollArea
-                ? scrollArea.getBoundingClientRect()
-                : null;
-
-            const menuWidth = menu.offsetWidth || 118;
-            const menuHeight = menu.offsetHeight || 104;
-            const safeGap = 8;
-
-            /*
-            菜单横向位置：
-            让菜单左边缘与历史记录右侧三个点按钮的左边缘对齐。
-            这样菜单会贴近按钮展开，而不是从侧边栏右边界外侧再展开。
-            */
-            let menuLeft = btnRect.left;
-
-            /*
-            兜底处理：
-            如果窗口太窄导致菜单右侧超出屏幕，才轻微向左收回。
-            正常电脑端和手机端宽度足够时，不会影响“左边缘对齐”的效果。
-            */
-            if (menuLeft + menuWidth + safeGap > window.innerWidth) {
-                menuLeft = Math.max(
-                    safeGap,
-                    window.innerWidth - menuWidth - safeGap
-                );
-            }
-            /*
-            底部边界：
-            不能被底部个人信息栏挡住；
-            也不能超过历史记录滚动区域和窗口底部。
-            */
-            const bottomLimit = Math.min(
-                userAreaRect ? userAreaRect.top : window.innerHeight,
-                scrollAreaRect ? scrollAreaRect.bottom : window.innerHeight,
-                window.innerHeight - safeGap
-            );
-
-            /*
-            顶部边界：
-            防止菜单向上展开时跑出折叠栏顶部。
-            */
-            const topLimit = Math.max(
-                scrollAreaRect ? scrollAreaRect.top : sidebarRect.top,
-                sidebarRect.top,
-                safeGap
-            );
-
-            /*
-            向下展开时：菜单出现在按钮右下方。
-            向上展开时：菜单出现在按钮右上方。
-            */
-            const downTop = btnRect.bottom + safeGap;
-            const upTop = btnRect.top - menuHeight - safeGap;
-
-            const enoughBelow = downTop + menuHeight <= bottomLimit;
-            const enoughAbove = upTop >= topLimit;
-
-            menu.classList.remove("drop-down", "drop-up");
-
-            if (!enoughBelow && enoughAbove) {
-                menu.classList.add("drop-up");
-                menu.style.left = menuLeft + "px";
-                menu.style.top = upTop + "px";
             } else {
-                menu.classList.add("drop-down");
-                menu.style.left = menuLeft + "px";
-
-                /*
-                如果下方空间不够、上方也不够，就尽量贴在可见区域内，
-                避免菜单被个人信息栏或窗口底部遮挡。
-                */
-                const fixedDownTop = Math.min(
-                    downTop,
-                    bottomLimit - menuHeight
-                );
-
-                menu.style.top = Math.max(topLimit, fixedDownTop) + "px";
+                answer = result.data || "暂无相关回答，可简化问题重试";
             }
+        } else {
+            answer = result.msg || "请求失败，请重试";
         }
 
-        function toggleHistoryMenu(index, recordEl) {
-            const userMenu = document.getElementById("sidebar-user-menu");
+        appendAiMessage(answer);
+        currentConversation.push({ role: "assistant", content: String(answer) });
+        if (token) await loadUserHistory();
+    } catch (err) {
+        clearTimeout(timer);
+        byId(loadingId)?.remove();
 
-            /*
-            先判断两个菜单当前的状态。
-            注意：必须在 closeUserMenu() / closeHistoryMenus() 之前判断。
-            */
-            const isUserMenuOpen =
-                userMenu && !userMenu.classList.contains("hidden");
+        const msg = err.name === "AbortError"
+            ? "请求超时，请稍后重试"
+            : `请求失败：${err.message}`;
 
-            const isHistoryMenuOpen =
-                openedHistoryMenuIndex !== null ||
-                !!document.querySelector(".history-menu");
+        appendAiMessage(msg);
+        console.error("发送问题失败：", err);
+    } finally {
+        isRequesting = false;
+        btn.disabled = false;
+        input.disabled = false;
+        input.focus();
+        scrollChatToBottom();
+    }
+}
 
-            /*
-            如果个人信息菜单正在打开：
-            点击历史记录右侧按钮时，只关闭个人信息菜单，不打开历史记录菜单。
-            */
-            if (isUserMenuOpen) {
-                closeUserMenu();
-                return;
-            }
+function showRenameModal(index) {
+    const data = conversations[index];
+    if (!token) {
+        alert("请先登录");
+        return;
+    }
+    if (!data || !data.conversationId) {
+        alert("未找到该历史记录");
+        return;
+    }
 
-            /*
-            如果历史记录菜单已经打开：
-            再点击任意历史记录右侧按钮时，只关闭当前历史记录菜单。
-            不立即切换打开新的历史记录菜单。
-            */
-            if (isHistoryMenuOpen) {
-                closeHistoryMenus();
-                return;
-            }
+    renamingHistoryIndex = index;
+    const modal = byId("rename-modal");
+    const input = byId("rename-title-input");
+    const err = byId("rename-title-err");
+    if (!modal || !input || !err) return;
 
-            /*
-            没有任何菜单打开时，才正常打开历史记录菜单。
-            */
-            openedHistoryMenuIndex = index;
-            recordEl.classList.add("menu-open");
+    err.textContent = "";
+    input.value = data.title || "新对话";
+    modal.classList.remove("hidden");
 
-            lockHistoryScroll();
+    setTimeout(() => {
+        input.focus();
+        input.select();
+    }, 0);
+}
 
-            const menu = document.createElement("div");
-            menu.className = "history-menu";
+function hideRenameModal() {
+    const modal = byId("rename-modal");
+    const input = byId("rename-title-input");
+    const err = byId("rename-title-err");
 
-            /*
-            先隐藏，等计算完位置后再显示。
-            避免菜单先出现在错误位置，然后再跳动。
-            */
-            menu.style.visibility = "hidden";
+    if (modal) modal.classList.add("hidden");
+    if (input) input.value = "";
+    if (err) err.textContent = "";
 
-            // 防止点击菜单时触发打开对话
-            menu.onclick = (event) => {
-                event.stopPropagation();
-            };
+    renamingHistoryIndex = null;
+    closeHistoryMenus();
+}
 
-            const renameBtn = document.createElement("button");
-            renameBtn.type = "button";
-            renameBtn.className = "history-menu-item";
-            renameBtn.innerText = "重命名";
-            renameBtn.onclick = (event) => {
-                event.stopPropagation();
-                renameHistoryConversation(index);
-            };
+async function confirmRenameConversation() {
+    const index = renamingHistoryIndex;
+    const data = conversations[index];
+    const input = byId("rename-title-input");
+    const err = byId("rename-title-err");
+    if (!input || !err) return;
 
-            const deleteBtn = document.createElement("button");
-            deleteBtn.type = "button";
-            deleteBtn.className = "history-menu-item danger";
-            deleteBtn.innerText = "删除";
-            deleteBtn.onclick = (event) => {
-                event.stopPropagation();
-                deleteHistoryConversation(index);
-            };
+    if (!token) {
+        alert("请先登录");
+        return;
+    }
+    if (!data || !data.conversationId) {
+        err.textContent = "未找到该历史记录";
+        return;
+    }
 
-            menu.appendChild(renameBtn);
-            menu.appendChild(deleteBtn);
+    const title = input.value.trim();
+    if (!title) {
+        err.textContent = "标题不能为空";
+        input.focus();
+        return;
+    }
+    if (title.length > 50) {
+        err.textContent = "标题不能超过 50 个字符";
+        input.focus();
+        return;
+    }
 
-            /*
-            不 append 到 recordEl 里面，
-            而是 append 到 body 上，让它变成真正的浮层菜单。
-            */
-            document.body.appendChild(menu);
+    try {
+        const params = new URLSearchParams({ token, conversationId: data.conversationId, title });
+        const res = await fetch(`${BASE_URL}/conversation/title?${params.toString()}`, { method: "POST" });
+        if (!res.ok) throw new Error(`重命名接口响应失败：${res.status}`);
 
-            // 根据当前历史记录按钮的位置，决定菜单向右下还是右上展开
-            setHistoryMenuDirection(recordEl, menu);
-
-            menu.style.visibility = "";
+        const result = await res.json();
+        if (result.code !== 200) {
+            err.textContent = result.msg || "重命名失败";
+            return;
         }
 
-        function renameHistoryConversation(index) {
-            showRenameModal(index);
+        const historyScrollArea = $(".history-scroll-area");
+        const keepTop = historyScrollArea ? historyScrollArea.scrollTop : 0;
+
+        data.title = title;
+        if (data.conversationId === currentConversationId) setConversationTitle(title);
+
+        const modal = byId("rename-modal");
+        if (modal) modal.classList.add("hidden");
+
+        renamingHistoryIndex = null;
+        closeHistoryMenus();
+        renderHistoryList();
+
+        const newArea = $(".history-scroll-area");
+        if (newArea) {
+            newArea.scrollTop = keepTop;
+            requestAnimationFrame(() => newArea.scrollTop = keepTop);
+        }
+    } catch (errObj) {
+        console.error("重命名历史记录失败：", errObj);
+        err.textContent = "重命名失败，请稍后重试";
+    }
+}
+
+function showLoginModal() {
+    clearLoginErrors();
+    byId("login-modal")?.classList.remove("hidden");
+    setTimeout(() => byId("login-username")?.focus(), 0);
+}
+
+function hideLoginModal() {
+    byId("login-modal")?.classList.add("hidden");
+    clearLoginErrors();
+}
+
+function clearLoginErrors() {
+    ["login-username-err", "login-password-err", "login-err"].forEach(id => {
+        const el = byId(id);
+        if (el) el.textContent = "";
+    });
+}
+
+function showRegisterModal() {
+    clearRegisterErrors();
+    byId("register-modal")?.classList.remove("hidden");
+    setTimeout(() => byId("register-username")?.focus(), 0);
+}
+
+function hideRegisterModal() {
+    byId("register-modal")?.classList.add("hidden");
+    clearRegisterErrors();
+}
+
+function clearRegisterErrors() {
+    ["register-username-err", "register-password-err", "register-err"].forEach(id => {
+        const el = byId(id);
+        if (el) el.textContent = "";
+    });
+}
+
+function switchToRegister() {
+    hideLoginModal();
+    showRegisterModal();
+}
+
+function switchToLogin() {
+    hideRegisterModal();
+    showLoginModal();
+}
+
+function validateAccount(usernameVal, passwordVal, prefix) {
+    let hasError = false;
+    const usernameErr = byId(`${prefix}-username-err`);
+    const passwordErr = byId(`${prefix}-password-err`);
+
+    if (!usernameVal) {
+        usernameErr.textContent = "请输入用户名";
+        hasError = true;
+    } else if (!USERNAME_REG.test(usernameVal)) {
+        usernameErr.textContent = "用户名只能包含英文、数字、下划线，长度3-20位";
+        hasError = true;
+    }
+
+    if (!passwordVal) {
+        passwordErr.textContent = "请输入密码";
+        hasError = true;
+    } else if (passwordVal.length < 6) {
+        passwordErr.textContent = "密码长度至少6位";
+        hasError = true;
+    }
+
+    return !hasError;
+}
+
+async function doLogin() {
+    const usernameEl = byId("login-username");
+    const passwordEl = byId("login-password");
+    if (!usernameEl || !passwordEl) return;
+
+    const usernameVal = usernameEl.value.trim();
+    const passwordVal = passwordEl.value.trim();
+
+    clearLoginErrors();
+    if (!validateAccount(usernameVal, passwordVal, "login")) return;
+
+    try {
+        const res = await fetch(`${BASE_URL}/user/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify({ username: usernameVal, password: passwordVal })
+        });
+
+        if (!res.ok) throw new Error(`登录接口响应失败：${res.status}`);
+        const result = await res.json();
+
+        if (result.code !== 200) {
+            byId("login-err").textContent = result.msg || "登录失败，请重试";
+            return;
         }
 
-        async function deleteHistoryConversation(index) {
-            const data = conversations[index];
+        token = result.data?.token || "";
+        username = result.data?.username || usernameVal;
+        isAdmin = result.data?.admin === true;
+        saveUserInfo();
 
-            if (!token) {
-                alert("请先登录");
-                return;
-            }
+        conversations = [];
+        currentConversation = [];
+        currentConversationId = "";
 
-            if (!data || !data.conversationId) {
-                alert("未找到该历史记录");
-                return;
-            }
+        hideLoginModal();
+        initUserStatus();
+        updateGreeting();
+        await loadUserHistory();
+        showToast("登录成功");
+    } catch (err) {
+        console.error("登录请求失败：", err);
+        byId("login-err").textContent = "网络异常或服务未响应，请重试";
+    }
+}
 
-            const ok = confirm(`确定要删除「${data.title || "新对话"}」吗？`);
+async function doRegister() {
+    const usernameEl = byId("register-username");
+    const passwordEl = byId("register-password");
+    if (!usernameEl || !passwordEl) return;
 
-            if (!ok) {
-                closeHistoryMenus();
-                return;
-            }
+    const usernameVal = usernameEl.value.trim();
+    const passwordVal = passwordEl.value.trim();
 
-            try {
-                const params = new URLSearchParams();
-                params.set("token", token);
-                params.set("conversationId", data.conversationId);
+    clearRegisterErrors();
+    if (!validateAccount(usernameVal, passwordVal, "register")) return;
 
-                const res = await fetch(`${BASE_URL}/conversation/archive?${params.toString()}`, {
-                    method: "POST"
-                });
+    try {
+        const res = await fetch(`${BASE_URL}/user/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify({ username: usernameVal, password: passwordVal })
+        });
 
-                if (!res.ok) {
-                    throw new Error(`删除接口响应失败：${res.status}`);
-                }
+        if (!res.ok) throw new Error(`注册接口响应失败：${res.status}`);
+        const result = await res.json();
 
-                const result = await res.json();
+        if (result.code === 200) {
+            showToast("注册成功，请登录");
+            switchToLogin();
+        } else {
+            byId("register-err").textContent = result.msg || "注册失败，请更换用户名重试";
+        }
+    } catch (err) {
+        console.error("注册请求失败：", err);
+        byId("register-err").textContent = "网络异常或服务未响应，请重试";
+    }
+}
 
-                if (result.code !== 200) {
-                    alert(result.msg || "删除失败");
-                    return;
-                }
+function logout() {
+    clearUserInfo();
+    conversations = [];
+    currentConversation = [];
+    currentConversationId = "";
+    initUserStatus();
+    updateGreeting();
+    renderHistoryList();
+    createNewChat(false);
+    showToast("已退出登录");
+}
 
-                closeHistoryMenus();
+function createNewChat(shouldReloadHistory = true) {
+    closeProfilePage();
+    closeSettingsPage();
+    closeHistoryMenus();
+    closeUserMenu();
 
-                // 如果删除的是当前正在打开的对话，则回到新对话页面
-                if (currentConversationId === data.conversationId) {
-                    currentConversation = [];
-                    currentConversationId = "";
+    currentConversation = [];
+    currentConversationId = "";
 
-                    document
-                        .getElementById("chat-container")
-                        .classList
-                        .remove("chat-active");
+    const chatContainer = byId("chat-container");
+    const chat = byId("chat-messages");
+    const input = byId("question-input");
 
-                    document
-                        .getElementById("chat-container")
-                        .classList
-                        .add("start-mode");
+    if (chatContainer) {
+        chatContainer.classList.remove("chat-active");
+        chatContainer.classList.add("start-mode");
+    }
+    if (chat) chat.innerHTML = "";
+    if (input) {
+        input.value = "";
+        input.placeholder = "你好！我是华南理工校园百事通，有任何校园问题都可以问我～";
+        input.focus();
+    }
 
-                    document.getElementById("chat-messages").innerHTML = "";
+    setConversationTitle("新对话");
+    renderHistoryList();
 
-                    const input = document.getElementById("question-input");
-                    input.value = "";
-                    input.placeholder = "你好！我是华南理工校园百事通，有任何校园问题都可以问我～";
-                    input.focus();
-                }
+    if (token && shouldReloadHistory) loadUserHistory();
+}
 
-                // 重新加载历史记录，删除后的记录不会再显示
-                await loadUserHistory();
+function toggleSidebar() {
+    const isHistoryMenuOpen = openedHistoryMenuIndex !== null || !!$(".history-menu");
+    const userMenu = byId("sidebar-user-menu");
+    const isUserMenuOpen = userMenu && !userMenu.classList.contains("hidden");
 
-            } catch (err) {
-                console.error("删除历史记录失败：", err);
-                alert("删除失败，请稍后重试");
-            }
+    if (isHistoryMenuOpen || isUserMenuOpen) {
+        closeHistoryMenus();
+        closeUserMenu();
+        return;
+    }
+
+    const sidebar = byId("sidebar");
+    if (!sidebar) return;
+
+    sidebar.classList.toggle("open");
+    document.body.classList.toggle("sidebar-open", sidebar.classList.contains("open"));
+    updateSidebarPushMode();
+}
+
+function renderHistoryList() {
+    const list = byId("history-list");
+    if (!list) return;
+    list.innerHTML = "";
+
+    if (!token) return;
+
+    conversations.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = "history-record";
+        div.classList.toggle("selected", item.conversationId && item.conversationId === currentConversationId);
+        div.onclick = () => openConversation(index);
+
+        const titleSpan = document.createElement("span");
+        titleSpan.className = "history-record-title";
+        titleSpan.innerText = item.title || "新对话";
+
+        const moreBtn = document.createElement("button");
+        moreBtn.type = "button";
+        moreBtn.className = "history-more-btn";
+        moreBtn.innerHTML = "⋯";
+        moreBtn.title = "更多操作";
+        moreBtn.onclick = (event) => {
+            event.stopPropagation();
+            toggleHistoryMenu(index, div);
+        };
+
+        div.appendChild(titleSpan);
+        div.appendChild(moreBtn);
+        list.appendChild(div);
+    });
+}
+
+function lockHistoryScroll() {
+    const area = $(".history-scroll-area");
+    if (!area) return;
+    lockedHistoryScrollTop = area.scrollTop;
+    area.classList.add("scroll-locked");
+}
+
+function unlockHistoryScroll() {
+    const area = $(".history-scroll-area");
+    if (area) area.classList.remove("scroll-locked");
+    lockedHistoryScrollTop = 0;
+}
+
+function closeHistoryMenus() {
+    openedHistoryMenuIndex = null;
+    $$(".history-menu").forEach(menu => menu.remove());
+    $$(".history-record.menu-open").forEach(record => record.classList.remove("menu-open"));
+    unlockHistoryScroll();
+}
+
+function setHistoryMenuDirection(recordEl, menu) {
+    const sidebar = byId("sidebar");
+    const userArea = $(".sidebar-user-area");
+    const scrollArea = recordEl.closest(".history-scroll-area");
+    const moreBtn = recordEl.querySelector(".history-more-btn");
+
+    const btnRect = moreBtn ? moreBtn.getBoundingClientRect() : recordEl.getBoundingClientRect();
+    const sidebarRect = sidebar ? sidebar.getBoundingClientRect() : { left: 0, top: 0, bottom: window.innerHeight };
+    const userAreaRect = userArea ? userArea.getBoundingClientRect() : null;
+    const scrollAreaRect = scrollArea ? scrollArea.getBoundingClientRect() : null;
+
+    const menuWidth = menu.offsetWidth || 118;
+    const menuHeight = menu.offsetHeight || 104;
+    const gap = 8;
+
+    let left = btnRect.left;
+    if (left + menuWidth + gap > window.innerWidth) {
+        left = Math.max(gap, window.innerWidth - menuWidth - gap);
+    }
+
+    const bottomLimit = Math.min(
+        userAreaRect ? userAreaRect.top : window.innerHeight,
+        scrollAreaRect ? scrollAreaRect.bottom : window.innerHeight,
+        window.innerHeight - gap
+    );
+    const topLimit = Math.max(
+        scrollAreaRect ? scrollAreaRect.top : sidebarRect.top,
+        sidebarRect.top,
+        gap
+    );
+
+    const downTop = btnRect.bottom + gap;
+    const upTop = btnRect.top - menuHeight - gap;
+    const enoughBelow = downTop + menuHeight <= bottomLimit;
+    const enoughAbove = upTop >= topLimit;
+
+    menu.classList.remove("drop-down", "drop-up");
+    menu.style.left = `${left}px`;
+
+    if (!enoughBelow && enoughAbove) {
+        menu.classList.add("drop-up");
+        menu.style.top = `${upTop}px`;
+    } else {
+        menu.classList.add("drop-down");
+        menu.style.top = `${Math.max(topLimit, Math.min(downTop, bottomLimit - menuHeight))}px`;
+    }
+}
+
+function toggleHistoryMenu(index, recordEl) {
+    const userMenu = byId("sidebar-user-menu");
+    const isUserMenuOpen = userMenu && !userMenu.classList.contains("hidden");
+    const isHistoryMenuOpen = openedHistoryMenuIndex !== null || !!$(".history-menu");
+
+    if (isUserMenuOpen) {
+        closeUserMenu();
+        return;
+    }
+
+    if (isHistoryMenuOpen) {
+        closeHistoryMenus();
+        return;
+    }
+
+    openedHistoryMenuIndex = index;
+    recordEl.classList.add("menu-open");
+    lockHistoryScroll();
+
+    const menu = document.createElement("div");
+    menu.className = "history-menu";
+    menu.style.visibility = "hidden";
+    menu.onclick = (event) => event.stopPropagation();
+
+    menu.appendChild(createMenuButton("重命名", "history-menu-item", (event) => {
+        event.stopPropagation();
+        showRenameModal(index);
+    }));
+
+    menu.appendChild(createMenuButton("删除", "history-menu-item danger", (event) => {
+        event.stopPropagation();
+        deleteHistoryConversation(index);
+    }));
+
+    document.body.appendChild(menu);
+    setHistoryMenuDirection(recordEl, menu);
+    menu.style.visibility = "";
+}
+
+async function deleteHistoryConversation(index) {
+    const data = conversations[index];
+
+    if (!token) {
+        alert("请先登录");
+        return;
+    }
+    if (!data || !data.conversationId) {
+        alert("未找到该历史记录");
+        return;
+    }
+
+    if (!confirm(`确定要删除「${data.title || "新对话"}」吗？`)) {
+        closeHistoryMenus();
+        return;
+    }
+
+    try {
+        const params = new URLSearchParams({ token, conversationId: data.conversationId });
+        const res = await fetch(`${BASE_URL}/conversation/archive?${params.toString()}`, { method: "POST" });
+        if (!res.ok) throw new Error(`删除接口响应失败：${res.status}`);
+
+        const result = await res.json();
+        if (result.code !== 200) {
+            alert(result.msg || "删除失败");
+            return;
         }
 
-        async function loadUserHistory() {
-            if (!token) {
-                conversations = [];
-                renderHistoryList();
-                return;
-            }
+        closeHistoryMenus();
 
-            try {
-                const res = await fetch(`${BASE_URL}/conversation/list?token=${encodeURIComponent(token)}`);
-                if (!res.ok) {
-                    throw new Error(`历史记录接口响应失败：${res.status}`);
-                }
-
-                const result = await res.json();
-
-                if (result.code === 200 && Array.isArray(result.data)) {
-                    conversations = result.data.map(item => ({
-                        id: item.conversationId,
-                        conversationId: item.conversationId,
-                        title: item.title || "新对话",
-                        messages: []
-                    }));
-                } else {
-                    conversations = [];
-                    console.error("读取历史记录失败：", result.msg);
-                }
-
-                renderHistoryList();
-            } catch (err) {
-                console.error("读取历史记录失败：", err);
-            }
+        if (currentConversationId === data.conversationId) {
+            createNewChat(false);
         }
 
-        async function openConversation(index){
-            closeProfilePage();
+        await loadUserHistory();
+    } catch (err) {
+        console.error("删除历史记录失败：", err);
+        alert("删除失败，请稍后重试");
+    }
+}
 
-            if(!token){
-                alert("请先登录");
-                return;
-            }
+async function loadUserHistory() {
+    if (!token) {
+        conversations = [];
+        renderHistoryList();
+        return;
+    }
 
-            closeHistoryMenus();
+    try {
+        const res = await fetch(`${BASE_URL}/conversation/list?token=${encodeURIComponent(token)}`);
+        if (!res.ok) throw new Error(`历史记录接口响应失败：${res.status}`);
 
-            const data = conversations[index];
-            if (!data || !data.conversationId) return;
-
-            const historyList = document.getElementById("history-list");
-            Array.from(historyList.children).forEach((div, idx) => {
-                if (idx === index) {
-                    div.classList.add("selected");
-                } else {
-                    div.classList.remove("selected");
-                }
-            });
-
-            try {
-                const res = await fetch(
-                    `${BASE_URL}/conversation/messages?token=${encodeURIComponent(token)}&conversationId=${encodeURIComponent(data.conversationId)}`
-                );
-
-                if (!res.ok) {
-                    throw new Error(`历史详情接口响应失败：${res.status}`);
-                }
-
-                const result = await res.json();
-
-                if (result.code !== 200 || !Array.isArray(result.data)) {
-                    alert(result.msg || "读取历史对话失败");
-                    return;
-                }
-
-                const chat = document.getElementById("chat-messages");
-                chat.innerHTML = "";
-
-                currentConversation = result.data.map(msg => {
-                    const role = msg.role === "USER" ? "user" : "assistant";
-                    const content = msg.content || "";
-
-                    if(role === "user"){
-                        chat.innerHTML += `
-                        <div class="user-message message">
-                            <div class="bubble">${escapeHtml(content)}</div>
-                        </div>`;
-                    } else {
-                        const ans = formatAnswerWithSuffix(content);
-                        chat.innerHTML += `
-                        <div class="ai-message message">
-                            <div class="bubble no-bg">
-                                ${renderMarkdownToHtml(ans.text)}
-                                ${ans.suffix ? `<div class="bubble-suffix">${escapeHtml(ans.suffix)}</div>` : ""}
-                            </div>
-                        </div>`;
-                    }
-
-                    return { role, content };
-                });
-
-                currentConversationId = data.conversationId;
-
-                document
-                    .getElementById("chat-container")
-                    .classList
-                    .remove("start-mode");
-
-                document
-                    .getElementById("chat-container")
-                    .classList
-                    .add("chat-active");
-
-                document.getElementById("question-input").placeholder = "请输入你的问题";
-                setConversationTitle(data.title || "新对话");
-                scrollChatToBottom();
-
-            } catch(err) {
-                console.error("拉取对话档案失败：", err);
-                alert("读取历史对话失败，请稍后重试");
-            }
+        const result = await res.json();
+        if (result.code === 200 && Array.isArray(result.data)) {
+            conversations = result.data.map(item => ({
+                id: item.conversationId,
+                conversationId: item.conversationId,
+                title: item.title || "新对话",
+                messages: []
+            }));
+        } else {
+            conversations = [];
+            console.error("读取历史记录失败：", result.msg);
         }
 
-        async function updateConversationTitle(conversationId, title) {
-            if (!token || !conversationId || !title) return;
+        renderHistoryList();
+    } catch (err) {
+        console.error("读取历史记录失败：", err);
+    }
+}
 
-            try {
-                const params = new URLSearchParams();
-                params.set("token", token);
-                params.set("conversationId", conversationId);
-                params.set("title", title);
+async function openConversation(index) {
+    if (!token) {
+        alert("请先登录");
+        return;
+    }
 
-                const res = await fetch(`${BASE_URL}/conversation/title?${params.toString()}`, {
-                    method: "POST"
-                });
+    closeProfilePage();
+    closeSettingsPage();
+    closeHistoryMenus();
 
-                const result = await res.json();
-                if (result.code !== 200) {
-                    console.error("修改对话标题失败：", result.msg);
-                }
-            } catch (err) {
-                console.error("修改对话标题失败：", err);
-            }
+    const data = conversations[index];
+    if (!data || !data.conversationId) return;
+
+    try {
+        const res = await fetch(
+            `${BASE_URL}/conversation/messages?token=${encodeURIComponent(token)}&conversationId=${encodeURIComponent(data.conversationId)}`
+        );
+        if (!res.ok) throw new Error(`历史详情接口响应失败：${res.status}`);
+
+        const result = await res.json();
+        if (result.code !== 200 || !Array.isArray(result.data)) {
+            alert(result.msg || "读取历史对话失败");
+            return;
         }
 
-        function scrollChatToBottom() {
-            const chat = document.getElementById("chat-messages");
-            setTimeout(() => {
-                chat.scrollTop = chat.scrollHeight;
-            }, 50);
+        const chat = byId("chat-messages");
+        const chatContainer = byId("chat-container");
+        const input = byId("question-input");
+
+        if (chat) chat.innerHTML = "";
+        currentConversation = result.data.map(msg => {
+            const role = msg.role === "USER" ? "user" : "assistant";
+            const content = msg.content || "";
+            if (role === "user") appendUserMessage(content);
+            else appendAiMessage(content);
+            return { role, content };
+        });
+
+        currentConversationId = data.conversationId;
+
+        if (chatContainer) {
+            chatContainer.classList.remove("start-mode");
+            chatContainer.classList.add("chat-active");
         }
 
-        function formatAnswerWithSuffix(answerText) {
-            const suffixes = [
-                "（知识库信息）",
-                "【提示：数据库中没有相关内容，此内容为 AI 自动生成。】",
-                "(来自当前对话上传文件)",
-                "(来自用户全局知识库)"
-            ];
+        if (input) input.placeholder = "请输入你的问题";
+        setConversationTitle(data.title || "新对话");
+        renderHistoryList();
+        scrollChatToBottom();
+    } catch (err) {
+        console.error("拉取对话档案失败：", err);
+        alert("读取历史对话失败，请稍后重试");
+    }
+}
 
-            let mainText = String(answerText || "");
-            let detectedSuffix = "";
+async function updateConversationTitle(conversationId, title) {
+    if (!token || !conversationId || !title) return;
 
-            for (const s of suffixes) {
-                if (mainText.endsWith(s)) {
-                    mainText = mainText.slice(0, -s.length).trim();
-                    detectedSuffix = s;
-                    break;
-                }
-            }
+    try {
+        const params = new URLSearchParams({ token, conversationId, title });
+        const res = await fetch(`${BASE_URL}/conversation/title?${params.toString()}`, { method: "POST" });
+        const result = await res.json();
 
-            return {
-                text: mainText,
-                suffix: detectedSuffix
-            };
+        if (result.code !== 200) {
+            console.error("修改对话标题失败：", result.msg);
+            return;
         }
 
-        function escapeHtml(text) {
-            return String(text || "")
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
+        const item = conversations.find(c => c.conversationId === conversationId);
+        if (item) item.title = title;
+        setConversationTitle(title);
+    } catch (err) {
+        console.error("修改对话标题失败：", err);
+    }
+}
+
+function scrollChatToBottom() {
+    const chat = byId("chat-messages");
+    if (!chat) return;
+    setTimeout(() => chat.scrollTop = chat.scrollHeight, 50);
+}
+
+function formatAnswerWithSuffix(answerText) {
+    const suffixes = [
+        "（知识库信息）",
+        "【提示：数据库中没有相关内容，此内容为 AI 自动生成。】",
+        "(来自当前对话上传文件)",
+        "(来自用户全局知识库)"
+    ];
+
+    let mainText = String(answerText || "");
+    let detectedSuffix = "";
+
+    for (const suffix of suffixes) {
+        if (mainText.endsWith(suffix)) {
+            mainText = mainText.slice(0, -suffix.length).trim();
+            detectedSuffix = suffix;
+            break;
         }
+    }
 
-        function toggleDeepSearch() {
-            const deepBtn = document.getElementById("deep-btn");
-            deepBtn.classList.toggle("active");
-            localStorage.setItem(
-                "deepSearchEnabled",
-                deepBtn.classList.contains("active")
-            );
+    return { text: mainText, suffix: detectedSuffix };
+}
+
+function toggleDeepSearch() {
+    const deepBtn = byId("deep-btn");
+    if (!deepBtn) return;
+    deepBtn.classList.toggle("active");
+    localStorage.setItem("deepSearchEnabled", String(deepBtn.classList.contains("active")));
+}
+
+function toggleAdminMode() {
+    if (!isAdmin) return;
+    byId("admin-btn")?.classList.toggle("active");
+}
+
+function renderMarkdownToHtml(mdText) {
+    if (!mdText) return `<div class="markdown"></div>`;
+
+    const lines = String(mdText)
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n")
+        .split("\n");
+
+    let html = "";
+    let inUl = false;
+    let inOl = false;
+
+    function closeLists() {
+        if (inUl) {
+            html += "</ul>";
+            inUl = false;
         }
-
-        function toggleAdminMode() {
-            if (!isAdmin) return;
-
-            const adminBtn = document.getElementById("admin-btn");
-            adminBtn.classList.toggle("active");
+        if (inOl) {
+            html += "</ol>";
+            inOl = false;
         }
+    }
 
-        function renderMarkdownToHtml(mdText) {
-            if (!mdText) return "";
+    function parseInline(text) {
+        let safe = escapeHtml(text);
+        safe = safe.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+        safe = safe.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, "$1<em>$2</em>");
+        return safe;
+    }
 
-            const lines = String(mdText || "")
-                .replace(/\r\n/g, "\n")
-                .replace(/\r/g, "\n")
-                .split("\n");
+    lines.forEach(rawLine => {
+        const line = rawLine.trim();
 
-            let html = "";
-            let inUl = false;
-            let inOl = false;
-
-            function closeLists() {
-                if (inUl) {
-                    html += "</ul>";
-                    inUl = false;
-                }
-                if (inOl) {
-                    html += "</ol>";
-                    inOl = false;
-                }
-            }
-
-            function escapeLine(text) {
-                return String(text || "")
-                    .replace(/&/g, "&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;")
-                    .replace(/"/g, "&quot;")
-                    .replace(/'/g, "&#039;");
-            }
-
-            function parseInline(text) {
-                let safe = escapeLine(text);
-
-                /*
-                    先保护 **加粗**，避免被 *斜体* 误伤
-                */
-                safe = safe.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-
-                /*
-                    斜体：
-                    只处理成对的单星号，例如：*这是斜体*
-                    不处理行首的 * 列表符号
-                */
-                safe = safe.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, "$1<em>$2</em>");
-
-                return safe;
-            }
-
-            lines.forEach(rawLine => {
-                const line = rawLine.trim();
-
-                if (!line) {
-                    closeLists();
-                    return;
-                }
-
-                // 分割线
-                if (/^(-{3,}|\*{3,}|_{3,})$/.test(line)) {
-                    closeLists();
-                    html += "<hr>";
-                    return;
-                }
-
-                // 四级标题：#### 标题 或 ####标题
-                if (/^####\s*/.test(line)) {
-                    closeLists();
-                    html += `<h4>${parseInline(line.replace(/^####\s*/, ""))}</h4>`;
-                    return;
-                }
-
-                /*
-                    三级标题：### 标题
-                */
-                if (/^###\s+/.test(line)) {
-                    closeLists();
-                    html += `<h3>${parseInline(line.replace(/^###\s+/, ""))}</h3>`;
-                    return;
-                }
-
-                /*
-                    二级标题：## 标题
-                */
-                if (/^##\s+/.test(line)) {
-                    closeLists();
-                    html += `<h2>${parseInline(line.replace(/^##\s+/, ""))}</h2>`;
-                    return;
-                }
-
-                /*
-                    一级标题：# 标题
-                */
-                if (/^#\s+/.test(line)) {
-                    closeLists();
-                    html += `<h1>${parseInline(line.replace(/^#\s+/, ""))}</h1>`;
-                    return;
-                }
-
-                /*
-                    引用：> 提示内容
-                */
-                if (/^>\s?/.test(line)) {
-                    closeLists();
-                    html += `<blockquote>${parseInline(line.replace(/^>\s?/, ""))}</blockquote>`;
-                    return;
-                }
-
-                /*
-                    有序列表：1. 内容 / 2. 内容
-                */
-                if (/^\d+\.\s+/.test(line)) {
-                    if (inUl) {
-                        html += "</ul>";
-                        inUl = false;
-                    }
-                    if (!inOl) {
-                        html += "<ol>";
-                        inOl = true;
-                    }
-
-                    html += `<li>${parseInline(line.replace(/^\d+\.\s+/, ""))}</li>`;
-                    return;
-                }
-
-                /*
-                    无序列表：
-                    - 内容
-                    * 内容
-                    • 内容
-
-                    注意：
-                    这里的 * 内容 会被当成列表，
-                    不是斜体。
-                */
-                if (/^[-*•]\s+/.test(line)) {
-                    if (inOl) {
-                        html += "</ol>";
-                        inOl = false;
-                    }
-                    if (!inUl) {
-                        html += "<ul>";
-                        inUl = true;
-                    }
-
-                    html += `<li>${parseInline(line.replace(/^[-*•]\s+/, ""))}</li>`;
-                    return;
-                }
-
-                /*
-                    普通段落
-                */
-                closeLists();
-                html += `<p>${parseInline(line)}</p>`;
-            });
-
+        if (!line) {
             closeLists();
-
-            return `<div class="markdown">${html}</div>`;
+            return;
         }
-    </script>
+
+        if (/^(-{3,}|\*{3,}|_{3,})$/.test(line)) {
+            closeLists();
+            html += "<hr>";
+            return;
+        }
+
+        if (/^####\s*/.test(line)) {
+            closeLists();
+            html += `<h4>${parseInline(line.replace(/^####\s*/, ""))}</h4>`;
+            return;
+        }
+
+        if (/^###\s+/.test(line)) {
+            closeLists();
+            html += `<h3>${parseInline(line.replace(/^###\s+/, ""))}</h3>`;
+            return;
+        }
+
+        if (/^##\s+/.test(line)) {
+            closeLists();
+            html += `<h2>${parseInline(line.replace(/^##\s+/, ""))}</h2>`;
+            return;
+        }
+
+        if (/^#\s+/.test(line)) {
+            closeLists();
+            html += `<h1>${parseInline(line.replace(/^#\s+/, ""))}</h1>`;
+            return;
+        }
+
+        if (/^>\s?/.test(line)) {
+            closeLists();
+            html += `<blockquote>${parseInline(line.replace(/^>\s?/, ""))}</blockquote>`;
+            return;
+        }
+
+        if (/^\d+\.\s+/.test(line)) {
+            if (inUl) {
+                html += "</ul>";
+                inUl = false;
+            }
+            if (!inOl) {
+                html += "<ol>";
+                inOl = true;
+            }
+            html += `<li>${parseInline(line.replace(/^\d+\.\s+/, ""))}</li>`;
+            return;
+        }
+
+        if (/^[-*•]\s+/.test(line)) {
+            if (inOl) {
+                html += "</ol>";
+                inOl = false;
+            }
+            if (!inUl) {
+                html += "<ul>";
+                inUl = true;
+            }
+            html += `<li>${parseInline(line.replace(/^[-*•]\s+/, ""))}</li>`;
+            return;
+        }
+
+        closeLists();
+        html += `<p>${parseInline(line)}</p>`;
+    });
+
+    closeLists();
+    return `<div class="markdown">${html}</div>`;
+}
+
+function setupEvents() {
+    const chat = byId("chat-messages");
+    if (chat) {
+        chat.addEventListener("scroll", () => {
+            chat.classList.add("scrolling");
+            clearTimeout(chatScrollTimer);
+            chatScrollTimer = setTimeout(() => chat.classList.remove("scrolling"), 800);
+        });
+    }
+
+    const historyScrollArea = $(".history-scroll-area");
+    if (historyScrollArea) {
+        historyScrollArea.addEventListener("wheel", (event) => {
+            if (historyScrollArea.classList.contains("scroll-locked")) event.preventDefault();
+        }, { passive: false });
+
+        historyScrollArea.addEventListener("touchmove", (event) => {
+            if (historyScrollArea.classList.contains("scroll-locked")) event.preventDefault();
+        }, { passive: false });
+
+        historyScrollArea.addEventListener("scroll", () => {
+            if (historyScrollArea.classList.contains("scroll-locked")) {
+                historyScrollArea.scrollTop = lockedHistoryScrollTop;
+            }
+        });
+    }
+
+    const input = byId("question-input");
+    if (input) {
+        input.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+                event.preventDefault();
+                sendQuestion();
+            }
+        });
+    }
+
+    const renameInput = byId("rename-title-input");
+    if (renameInput) {
+        renameInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" && !event.isComposing) {
+                event.preventDefault();
+                confirmRenameConversation();
+            }
+            if (event.key === "Escape") {
+                event.preventDefault();
+                hideRenameModal();
+            }
+        });
+    }
+
+    [["login", doLogin], ["register", doRegister]].forEach(([prefix, handler]) => {
+        [`${prefix}-username`, `${prefix}-password`].forEach(id => {
+            const el = byId(id);
+            if (!el) return;
+            el.addEventListener("keydown", (event) => {
+                const modal = byId(`${prefix}-modal`);
+                if (event.key === "Enter" && !event.isComposing && modal && !modal.classList.contains("hidden")) {
+                    event.preventDefault();
+                    handler();
+                }
+            });
+        });
+    });
+
+    document.addEventListener("click", (event) => {
+        const sidebar = byId("sidebar");
+        const clickedHistoryMenu = event.target.closest(".history-menu");
+        const clickedHistoryMoreBtn = event.target.closest(".history-more-btn");
+        const clickedSidebarUserMenu = event.target.closest(".sidebar-user-menu");
+        const clickedSidebarUserBtn = event.target.closest(".sidebar-user-btn");
+        const clickedInsideSidebar = sidebar && sidebar.contains(event.target);
+
+        if (clickedHistoryMenu || clickedHistoryMoreBtn || clickedSidebarUserMenu || clickedSidebarUserBtn) return;
+
+        if (clickedInsideSidebar) {
+            closeHistoryMenus();
+            closeUserMenu();
+            return;
+        }
+
+        closeHistoryMenus();
+        closeUserMenu();
+    });
+
+    window.addEventListener("resize", () => {
+        updateSidebarPushMode();
+        closeHistoryMenus();
+        closeUserMenu();
+    });
+}
+
+function initPage() {
+    applyTheme(localStorage.getItem("themeMode") || "light", false);
+
+    const deepBtn = byId("deep-btn");
+    if (deepBtn) deepBtn.classList.toggle("active", localStorage.getItem("deepSearchEnabled") === "true");
+
+    setupEvents();
+    initUserStatus();
+    updateGreeting();
+    renderHistoryList();
+    updateSidebarPushMode();
+    checkBackendHealth();
+    setInterval(checkBackendHealth, 30000);
+
+    if (token) checkTokenValid();
+}
+
+document.addEventListener("DOMContentLoaded", initPage);
+</script>
 </body>
 </html>
