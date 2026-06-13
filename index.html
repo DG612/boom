@@ -435,12 +435,183 @@ body.light-theme .sidebar-user-menu-item:hover{background:var(--soft-2)}
     box-shadow:var(--shadow);
 }
 .profile-card{
-    padding:28px 24px;text-align:center;
-    display:flex;flex-direction:column;justify-content:center;align-items:center;
+    height:min(76vh,680px);
+    padding:24px;
+    text-align:left;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-start;
+    align-items:stretch;
+    overflow-y:auto;
 }
-.profile-avatar{width:76px;height:76px;font-size:30px;margin-bottom:16px}
-.profile-name{font-size:20px;font-weight:700;color:var(--text-strong);margin-bottom:10px}
-.profile-info{font-size:14px;color:var(--muted);line-height:1.8}
+
+.profile-header{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin-bottom:18px;
+}
+
+.profile-avatar{
+    width:76px;
+    height:76px;
+    font-size:30px;
+    margin-bottom:0;
+}
+
+.profile-head-text{
+    flex:1;
+    min-width:0;
+}
+
+.profile-name{
+    font-size:20px;
+    font-weight:700;
+    color:var(--text-strong);
+    margin-bottom:6px;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+
+.profile-subtitle{
+    font-size:13px;
+    color:var(--muted);
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+
+.profile-info{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin-bottom:18px;
+}
+
+.profile-info-item{
+    min-height:58px;
+    padding:10px 12px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:var(--soft);
+}
+
+.profile-info-item span{
+    display:block;
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:5px;
+}
+
+.profile-info-item strong{
+    display:block;
+    font-size:13px;
+    color:var(--text-strong);
+    font-weight:600;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+
+.profile-form-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:14px;
+}
+
+.profile-field{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+}
+
+.profile-field-full{
+    grid-column:1 / -1;
+}
+
+.profile-field label{
+    font-size:13px;
+    color:var(--muted);
+}
+
+.profile-field input,
+.profile-field select,
+.profile-field textarea{
+    width:100%;
+    border:1px solid transparent;
+    border-radius:10px;
+    background:var(--soft);
+    color:var(--text);
+    outline:none;
+    font-size:14px;
+    padding:10px 12px;
+}
+
+.profile-field input,
+.profile-field select{
+    height:42px;
+}
+
+.profile-field textarea{
+    resize:none;
+    line-height:1.6;
+}
+
+.profile-field input:focus,
+.profile-field select:focus,
+.profile-field textarea:focus{
+    border-color:#aaa;
+    box-shadow:0 0 0 1px rgba(255,255,255,.12);
+}
+
+.profile-actions{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:18px;
+}
+
+.profile-tip{
+    margin-right:auto;
+    font-size:12px;
+    color:var(--muted);
+}
+
+.profile-reset-btn,
+.profile-save-btn{
+    min-width:88px;
+    height:38px;
+    border:none;
+    border-radius:12px;
+    font-size:14px;
+}
+
+.profile-reset-btn{
+    background:var(--soft);
+    color:var(--text);
+    border:1px solid var(--border);
+}
+
+.profile-reset-btn:hover{
+    background:var(--hover);
+}
+
+.profile-save-btn{
+    background:var(--send-bg);
+    color:var(--send-text);
+}
+
+.profile-save-btn:hover{
+    filter:brightness(.94);
+}
+
+.profile-save-btn:disabled{
+    background:#bdbdbd;
+    color:#555;
+    cursor:not-allowed;
+}
 .settings-card{overflow:hidden;display:flex}
 .settings-sidebar{
     width:190px;flex-shrink:0;padding:18px 12px;
@@ -567,7 +738,7 @@ body.light-theme .cancel-btn:hover{background:#ded8cc}
     color:transparent;
 }
 
-#login-modal .login-floating-item.label-floated label,
+#login-modal .login-floating-item:has(input:focus) label,
 #login-modal .login-floating-item:has(input:not(:placeholder-shown)) label{
     left:0;
     top:0;
@@ -625,7 +796,48 @@ body.light-theme .cancel-btn:hover{background:#ded8cc}
     .markdown{font-size:14px}
     .markdown h1{font-size:18px}.markdown h2{font-size:17px}.markdown h3{font-size:16px}
     .profile-page,.settings-page{padding:14px 12px}
-    .profile-card{width:100%;min-height:260px;height:min(46vh,360px);padding:22px 16px;border-radius:16px}
+    .profile-card{
+        width:100%;
+        min-height:0;
+        height:min(72vh,580px);
+        padding:18px 14px;
+        border-radius:16px;
+    }
+
+    .profile-header{
+        gap:12px;
+        margin-bottom:14px;
+    }
+
+    .profile-avatar{
+        width:58px;
+        height:58px;
+        font-size:24px;
+    }
+
+    .profile-info{
+        grid-template-columns:1fr;
+        gap:8px;
+    }
+
+    .profile-form-grid{
+        grid-template-columns:1fr;
+        gap:12px;
+    }
+
+    .profile-actions{
+        flex-wrap:wrap;
+    }
+
+    .profile-tip{
+        width:100%;
+        margin-right:0;
+    }
+
+    .profile-reset-btn,
+    .profile-save-btn{
+        flex:1;
+    }
     .settings-card{width:100%;min-height:360px;height:min(68vh,520px);border-radius:16px;flex-direction:column}
     .settings-sidebar{width:100%;padding:12px;border-right:none;border-bottom:1px solid var(--border)}
     .settings-content{padding:20px 16px}
@@ -717,11 +929,98 @@ body.light-theme .cancel-btn:hover{background:#ded8cc}
 
     <section id="profile-page" class="profile-page">
         <div class="profile-card">
-            <div class="profile-avatar" id="profile-avatar">游</div>
-            <div class="profile-name" id="profile-name">未登录</div>
+            <div class="profile-header">
+                <div class="profile-avatar" id="profile-avatar">游</div>
+                <div class="profile-head-text">
+                    <div class="profile-name" id="profile-name">未登录</div>
+                    <div class="profile-subtitle" id="profile-basic-line">登录后可完善个人资料</div>
+                </div>
+            </div>
+
             <div class="profile-info">
-                <div id="profile-login-status">当前状态：未登录</div>
-                <div id="profile-admin-status">权限：普通用户</div>
+                <div class="profile-info-item">
+                    <span>登录状态</span>
+                    <strong id="profile-login-status">当前状态：未登录</strong>
+                </div>
+                <div class="profile-info-item">
+                    <span>账号权限</span>
+                    <strong id="profile-admin-status">权限：普通用户</strong>
+                </div>
+                <div class="profile-info-item">
+                    <span>最后更新</span>
+                    <strong id="profile-updated-at">暂无</strong>
+                </div>
+            </div>
+
+            <div class="profile-form-grid">
+                <div class="profile-field">
+                    <label for="profile-display-name">显示名 / 昵称</label>
+                    <input id="profile-display-name" type="text" placeholder="例如：小华、阿钰">
+                </div>
+
+                <div class="profile-field">
+                    <label for="profile-gender">性别</label>
+                    <select id="profile-gender">
+                        <option value="">不填写</option>
+                        <option value="男">男</option>
+                        <option value="女">女</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+
+                <div class="profile-field">
+                    <label for="profile-age">年龄</label>
+                    <input id="profile-age" type="number" min="0" max="120" placeholder="例如：19">
+                </div>
+
+                <div class="profile-field">
+                    <label for="profile-birthday">生日</label>
+                    <input id="profile-birthday" type="date">
+                </div>
+
+                <div class="profile-field">
+                    <label for="profile-grade">年级</label>
+                    <input id="profile-grade" type="text" placeholder="例如：大二">
+                </div>
+
+                <div class="profile-field">
+                    <label for="profile-college">学院</label>
+                    <input id="profile-college" type="text" placeholder="例如：软件学院">
+                </div>
+
+                <div class="profile-field">
+                    <label for="profile-major">专业</label>
+                    <input id="profile-major" type="text" placeholder="例如：软件工程">
+                </div>
+
+                <div class="profile-field">
+                    <label for="profile-class-name">班级</label>
+                    <input id="profile-class-name" type="text" placeholder="例如：软件工程2401">
+                </div>
+
+                <div class="profile-field">
+                    <label for="profile-campus">校区</label>
+                    <input id="profile-campus" type="text" placeholder="例如：五山校区 / 大学城校区 / 国际校区">
+                </div>
+
+                <div class="profile-field">
+                    <label for="profile-theme-mode">偏好主题</label>
+                    <select id="profile-theme-mode">
+                        <option value="LIGHT">浅色主题</option>
+                        <option value="DARK">深色主题</option>
+                    </select>
+                </div>
+
+                <div class="profile-field profile-field-full">
+                    <label for="profile-bio">个人简介 / 备注</label>
+                    <textarea id="profile-bio" rows="3" placeholder="例如：希望优先回答软件学院、课程、实训、考试相关问题"></textarea>
+                </div>
+            </div>
+
+            <div class="profile-actions">
+                <span id="profile-tip" class="profile-tip">资料仅保存到当前账号。</span>
+                <button type="button" class="profile-reset-btn" onclick="resetProfileForm()">重置</button>
+                <button type="button" class="profile-save-btn" id="profile-save-btn" onclick="saveProfile()">保存资料</button>
             </div>
         </div>
     </section>
@@ -837,6 +1136,7 @@ let isRequesting = false;
 let token = localStorage.getItem("token") || "";
 let username = localStorage.getItem("username") || "";
 let isAdmin = localStorage.getItem("isAdmin") === "true" || localStorage.getItem("admin") === "true";
+let currentUserProfile = null;
 let conversations = [];
 let currentConversation = [];
 let currentConversationId = "";
@@ -921,13 +1221,40 @@ function updateGreeting() {
 }
 
 function getAvatarText() {
-    return token && username ? username.trim().charAt(0).toUpperCase() : "游";
+    const nameSource = currentUserProfile?.displayName || username;
+    return token && nameSource ? nameSource.trim().charAt(0).toUpperCase() : "游";
+}
+
+function getDisplayName() {
+    return token
+        ? ((currentUserProfile?.displayName || username || "已登录用户").trim())
+        : "未登录";
+}
+
+function buildProfileBasicLine(profile = currentUserProfile) {
+    if (!token) return "登录后可完善个人资料";
+
+    const parts = [
+        profile?.college,
+        profile?.major,
+        profile?.grade,
+        profile?.className,
+        profile?.campus
+    ].filter(Boolean);
+
+    return parts.length ? parts.join(" · ") : "完善学院、专业、班级、校区等资料";
+}
+
+function formatProfileTime(value) {
+    if (!value) return "暂无";
+    return String(value).replace("T", " ").slice(0, 16);
 }
 
 function clearUserInfo() {
     token = "";
     username = "";
     isAdmin = false;
+    currentUserProfile = null;
     ["token", "username", "isAdmin", "admin", "deepSearchEnabled"].forEach(key => localStorage.removeItem(key));
 }
 
@@ -949,7 +1276,7 @@ function initUserStatus() {
 
 function updateSidebarUserInfo() {
     const avatarText = getAvatarText();
-    const displayName = token ? (username || "已登录用户") : "未登录";
+    const displayName = getDisplayName();
 
     const sidebarAvatar = byId("sidebar-user-avatar");
     const sidebarName = byId("sidebar-user-name");
@@ -957,6 +1284,8 @@ function updateSidebarUserInfo() {
     const profileName = byId("profile-name");
     const profileLoginStatus = byId("profile-login-status");
     const profileAdminStatus = byId("profile-admin-status");
+    const profileBasicLine = byId("profile-basic-line");
+    const profileUpdatedAt = byId("profile-updated-at");
 
     if (sidebarAvatar) sidebarAvatar.textContent = avatarText;
     if (sidebarName) sidebarName.textContent = displayName;
@@ -964,8 +1293,164 @@ function updateSidebarUserInfo() {
     if (profileName) profileName.textContent = displayName;
     if (profileLoginStatus) profileLoginStatus.textContent = token ? "当前状态：已登录" : "当前状态：未登录";
     if (profileAdminStatus) profileAdminStatus.textContent = isAdmin ? "权限：管理员" : "权限：普通用户";
+    if (profileBasicLine) profileBasicLine.textContent = buildProfileBasicLine();
+    if (profileUpdatedAt) profileUpdatedAt.textContent = formatProfileTime(currentUserProfile?.updatedAt);
 
     renderSidebarUserMenu();
+}
+
+function getCurrentThemeModeForProfile() {
+    return document.body.classList.contains("light-theme") ? "LIGHT" : "DARK";
+}
+
+function normalizeProfile(data = {}) {
+    return {
+        id: data.id ?? null,
+        username: data.username || username || "",
+        displayName: data.displayName || "",
+        gender: data.gender || "",
+        age: data.age ?? "",
+        birthday: data.birthday || "",
+        grade: data.grade || "",
+        college: data.college || "软件学院",
+        major: data.major || "",
+        className: data.className || "",
+        campus: data.campus || "",
+        themeMode: data.themeMode || getCurrentThemeModeForProfile(),
+        bio: data.bio || "",
+        createdAt: data.createdAt || null,
+        updatedAt: data.updatedAt || null
+    };
+}
+
+function setProfileFieldValue(id, value) {
+    const el = byId(id);
+    if (el) el.value = value ?? "";
+}
+
+function renderProfileForm(profileData = {}) {
+    currentUserProfile = normalizeProfile(profileData);
+
+    setProfileFieldValue("profile-display-name", currentUserProfile.displayName);
+    setProfileFieldValue("profile-gender", currentUserProfile.gender);
+    setProfileFieldValue("profile-age", currentUserProfile.age);
+    setProfileFieldValue("profile-birthday", currentUserProfile.birthday);
+    setProfileFieldValue("profile-grade", currentUserProfile.grade);
+    setProfileFieldValue("profile-college", currentUserProfile.college);
+    setProfileFieldValue("profile-major", currentUserProfile.major);
+    setProfileFieldValue("profile-class-name", currentUserProfile.className);
+    setProfileFieldValue("profile-campus", currentUserProfile.campus);
+    setProfileFieldValue("profile-theme-mode", currentUserProfile.themeMode);
+    setProfileFieldValue("profile-bio", currentUserProfile.bio);
+
+    updateSidebarUserInfo();
+}
+
+function getProfileFormPayload() {
+    const ageRaw = byId("profile-age")?.value.trim() || "";
+    let age = null;
+
+    if (ageRaw) {
+        age = Number(ageRaw);
+        if (!Number.isInteger(age) || age < 0 || age > 120) {
+            throw new Error("年龄必须是 0 到 120 之间的整数");
+        }
+    }
+
+    return {
+        displayName: byId("profile-display-name")?.value.trim() || null,
+        gender: byId("profile-gender")?.value || null,
+        age,
+        birthday: byId("profile-birthday")?.value || null,
+        grade: byId("profile-grade")?.value.trim() || null,
+        college: byId("profile-college")?.value.trim() || "软件学院",
+        major: byId("profile-major")?.value.trim() || null,
+        className: byId("profile-class-name")?.value.trim() || null,
+        campus: byId("profile-campus")?.value.trim() || null,
+        themeMode: byId("profile-theme-mode")?.value || getCurrentThemeModeForProfile(),
+        bio: byId("profile-bio")?.value.trim() || null
+    };
+}
+
+async function loadUserProfile(showMessage = false) {
+    if (!token) {
+        currentUserProfile = null;
+        renderProfileForm({});
+        updateSidebarUserInfo();
+        return;
+    }
+
+    try {
+        const res = await fetch(`${BASE_URL}/user/profile?token=${encodeURIComponent(token)}`);
+        if (!res.ok) throw new Error(`用户资料接口响应失败：${res.status}`);
+
+        const result = await res.json();
+
+        if (result.code !== 200) {
+            console.error("读取用户资料失败：", result.msg);
+            if (showMessage) showToast(result.msg || "读取用户资料失败");
+            return;
+        }
+
+        renderProfileForm(result.data || {});
+
+        if (showMessage) showToast("已重新加载个人资料");
+    } catch (err) {
+        console.error("读取用户资料失败：", err);
+        if (showMessage) showToast("读取用户资料失败，请稍后重试");
+    }
+}
+
+async function saveProfile() {
+    if (!token) {
+        showToast("请先登录");
+        return;
+    }
+
+    const saveBtn = byId("profile-save-btn");
+
+    try {
+        const payload = getProfileFormPayload();
+
+        if (saveBtn) saveBtn.disabled = true;
+
+        const res = await fetch(`${BASE_URL}/user/profile/update?token=${encodeURIComponent(token)}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error(`保存用户资料接口响应失败：${res.status}`);
+
+        const result = await res.json();
+
+        if (result.code !== 200) {
+            showToast(result.msg || "保存失败");
+            return;
+        }
+
+        renderProfileForm(result.data || payload);
+
+        const themeMode = String((result.data && result.data.themeMode) || payload.themeMode || "").toUpperCase();
+        if (themeMode === "LIGHT" || themeMode === "DARK") {
+            applyTheme(themeMode === "DARK" ? "dark" : "light", false);
+        }
+
+        updateGreeting();
+        showToast("个人资料已保存");
+    } catch (err) {
+        console.error("保存个人资料失败：", err);
+        showToast(err.message || "保存失败，请稍后重试");
+    } finally {
+        if (saveBtn) saveBtn.disabled = false;
+    }
+}
+
+function resetProfileForm() {
+    loadUserProfile(true);
 }
 
 function createMenuButton(text, className, handler) {
@@ -1094,6 +1579,7 @@ function openProfilePage(event) {
 
     setConversationTitle("个人信息");
     updateSidebarUserInfo();
+    loadUserProfile();
 }
 
 function closeProfilePage(restoreChat = true) {
@@ -1181,6 +1667,7 @@ async function checkTokenValid() {
             saveUserInfo();
         }
 
+        await loadUserProfile(false);
         initUserStatus();
         updateGreeting();
         await loadUserHistory();
@@ -1432,25 +1919,12 @@ function hideLoginModal() {
     clearLoginForm();
 }
 
-function floatLoginLabel(inputEl) {
-    const item = inputEl ? inputEl.closest(".login-floating-item") : null;
-    if (item) item.classList.add("label-floated");
-}
-
-function resetLoginFloatingLabels() {
-    $$("#login-modal .login-floating-item").forEach(item => {
-        item.classList.remove("label-floated");
-    });
-}
-
 function clearLoginForm() {
     const usernameInput = byId("login-username");
     const passwordInput = byId("login-password");
 
     if (usernameInput) usernameInput.value = "";
     if (passwordInput) passwordInput.value = "";
-
-    resetLoginFloatingLabels();
 }
 
 function clearLoginErrors() {
@@ -1569,6 +2043,7 @@ async function doLogin() {
         currentConversationId = "";
 
         hideLoginModal();
+        await loadUserProfile(false);
         initUserStatus();
         updateGreeting();
         await loadUserHistory();
@@ -2393,12 +2868,6 @@ function setupEvents() {
         [`${prefix}-username`, `${prefix}-password`].forEach(id => {
             const el = byId(id);
             if (!el) return;
-
-            if (prefix === "login") {
-                el.addEventListener("focus", () => {
-                    floatLoginLabel(el);
-                });
-            }
 
             el.addEventListener("input", () => {
                 clearAccountErrorsOnTyping(prefix);
