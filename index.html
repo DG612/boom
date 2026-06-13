@@ -320,14 +320,26 @@ body.light-theme .sidebar-user-menu-item:hover{background:var(--soft-2)}
 }
 .input-wrapper{position:relative;width:100%}
 #question-input{
-    width:100%;min-height:118px;max-height:min(200px,50vh);
+    width:100%;
+    min-height:118px;
+    max-height:min(280px,45vh);
     padding:16px 100px 52px 18px;
-    resize:none;display:block;outline:none;
-    border:1px solid var(--border);border-radius:28px;
-    background:var(--input-bg);color:var(--text);
-    font-size:clamp(14px,1.6vw,16px);line-height:1.7;
+    resize:none;
+    display:block;
+    outline:none;
+    overflow-y:hidden;
+    scrollbar-width:none;
+    border:1px solid var(--border);
+    border-radius:28px;
+    background:var(--input-bg);
+    color:var(--text);
+    font-size:clamp(14px,1.6vw,16px);
+    line-height:1.7;
     box-shadow:0 10px 30px rgba(64,56,45,.12);
-    transition:border-color .2s,box-shadow .2s;
+    transition:border-color .2s,box-shadow .2s,height .15s ease;
+}
+#question-input::-webkit-scrollbar{
+    display:none;
 }
 #question-input:focus{border-color:#999;box-shadow:0 0 0 1px rgba(255,255,255,.12),0 12px 32px rgba(64,56,45,.14)}
 #question-input::placeholder{color:var(--muted)}
@@ -427,6 +439,107 @@ body.light-theme .cancel-btn:hover{background:#ded8cc}
 .register-link span,.login-link span{display:inline-block;font-size:13px;color:var(--muted);cursor:pointer;padding:2px 4px}
 .register-link span:hover,.login-link span:hover{color:var(--text-strong)}
 .error-msg{color:var(--danger);font-size:12px;margin-top:4px;min-height:16px}
+#login-modal .modal-title,
+#register-modal .modal-title{
+    margin-bottom:18px;
+}
+#login-modal .form-item,
+#register-modal .form-item{
+    margin-bottom:10px;
+}
+#login-modal .form-item label,
+#register-modal .form-item label{
+    margin-bottom:5px;
+}
+#login-modal .modal-btns,
+#register-modal .modal-btns{
+    margin-top:10px;
+}
+#login-modal .error-msg,
+#register-modal .error-msg{
+    margin-top:0;
+    min-height:0;
+    line-height:1.35;
+}
+#login-modal .error-msg:not(:empty),
+#register-modal .error-msg:not(:empty){
+    margin-top:4px;
+    min-height:16px;
+}
+
+
+/* =========================
+   文件上传弹窗与按钮
+   只新增文件上传功能，不影响原有问答、登录、历史记录
+========================= */
+
+.upload-mode-options{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin:6px 0 14px;
+}
+
+.upload-mode-option{
+    flex:1;
+    min-width:150px;
+    padding:10px 12px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:var(--soft);
+    color:var(--text);
+    font-size:14px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    cursor:pointer;
+}
+
+.upload-mode-option:hover{
+    background:var(--hover);
+}
+
+.upload-mode-option input{
+    accent-color:var(--send-bg);
+}
+
+.upload-file-box{
+    padding:14px;
+    border:1px dashed var(--border);
+    border-radius:14px;
+    background:var(--soft);
+    text-align:center;
+}
+
+.upload-file-name{
+    margin-top:10px;
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.5;
+    word-break:break-word;
+}
+
+.upload-file-actions{
+    display:flex;
+    gap:10px;
+    margin-top:16px;
+}
+
+.upload-result{
+    margin-top:12px;
+    min-height:20px;
+    max-height:160px;
+    overflow-y:auto;
+    white-space:pre-wrap;
+    word-break:break-word;
+    font-size:13px;
+    line-height:1.5;
+    color:var(--muted);
+}
+
+.upload-result.success{color:#16a34a}
+.upload-result.error{color:var(--danger)}
+.upload-result.info{color:var(--muted)}
 
 @media(max-width:900px){
     :root{--header-h:64px}
@@ -483,9 +596,11 @@ body.light-theme .cancel-btn:hover{background:#ded8cc}
         to{top:auto;bottom:10px;transform:translateX(-50%)}
     }
     #question-input{
-        min-height:84px;max-height:116px;
+        min-height:84px;
+        max-height:min(190px,42vh);
         padding:11px 82px 44px 14px;
-        font-size:14px;border-radius:24px;
+        font-size:14px;
+        border-radius:24px;
     }
     .option-buttons{
         left:12px;bottom:10px;gap:6px;
@@ -579,7 +694,9 @@ body.light-theme .cancel-btn:hover{background:#ded8cc}
     <div class="input-area">
         <div class="input-wrapper">
             <textarea id="question-input" placeholder="你好！我是华南理工校园百事通，有任何校园问题都可以问我～"></textarea>
+            <input id="file-upload-input" class="hidden" type="file" onchange="handleUploadFileChange(event)">
             <div class="option-buttons">
+                <button type="button" class="option-btn" id="file-upload-btn" onclick="openFileUploadModal()">上传文件</button>
                 <button type="button" class="option-btn" id="deep-btn" onclick="toggleDeepSearch()">深度思考</button>
                 <button type="button" class="option-btn admin-hidden" id="admin-btn" onclick="toggleAdminMode()">管理员模式</button>
             </div>
@@ -651,6 +768,43 @@ body.light-theme .cancel-btn:hover{background:#ded8cc}
     </div>
 </div>
 
+
+<div id="file-upload-modal" class="modal hidden">
+    <div class="modal-content">
+        <div class="modal-title">上传文件</div>
+
+        <div class="form-item">
+            <label>导入位置</label>
+            <div class="upload-mode-options">
+                <label class="upload-mode-option">
+                    <input type="radio" name="upload-scope" value="conversation" checked>
+                    当前对话知识库
+                </label>
+                <label class="upload-mode-option">
+                    <input type="radio" name="upload-scope" value="global">
+                    全局知识库
+                </label>
+            </div>
+        </div>
+
+        <div class="upload-file-box">
+            <button type="button" class="modal-btn cancel-btn" onclick="chooseUploadFile()">选择文件</button>
+            <div id="upload-file-name" class="upload-file-name">暂未选择文件</div>
+        </div>
+
+        <div id="upload-result" class="upload-result info"></div>
+
+        <div class="upload-file-actions">
+            <button class="modal-btn cancel-btn" onclick="parseSelectedFile()">只解析预览</button>
+            <button class="modal-btn primary-btn" onclick="importSelectedFile()">上传并导入</button>
+        </div>
+
+        <div class="modal-btns">
+            <button class="modal-btn cancel-btn" onclick="hideFileUploadModal()">关闭</button>
+        </div>
+    </div>
+</div>
+
 <script>
 const BASE_URL = "https://backup.u850688.nyat.app:54767";
 const SIDEBAR_WIDTH = 260;
@@ -669,6 +823,8 @@ let renamingHistoryIndex = null;
 let toastTimer = null;
 let chatScrollTimer = null;
 let lockedHistoryScrollTop = 0;
+let selectedUploadFile = null;
+let isFileUploading = false;
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
@@ -1064,6 +1220,7 @@ async function sendQuestion() {
     btn.disabled = true;
     input.disabled = true;
     input.value = "";
+    resetQuestionInputHeight();
 
     const isDeep = deepBtn.classList.contains("active");
     const isAdminMode = isAdmin && adminBtn.classList.contains("active");
@@ -1422,6 +1579,7 @@ function createNewChat(shouldReloadHistory = true) {
     if (input) {
         input.value = "";
         input.placeholder = "你好！我是华南理工校园百事通，有任何校园问题都可以问我～";
+        resetQuestionInputHeight();
         input.focus();
     }
 
@@ -1743,6 +1901,238 @@ function scrollChatToBottom() {
     setTimeout(() => chat.scrollTop = chat.scrollHeight, 50);
 }
 
+function resizeQuestionInput() {
+    const input = byId("question-input");
+    if (!input) return;
+
+    input.style.height = "auto";
+
+    const style = window.getComputedStyle(input);
+    const minHeight = parseFloat(style.minHeight) || 84;
+    const maxHeight = parseFloat(style.maxHeight) || window.innerHeight * 0.45;
+
+    const nextHeight = Math.max(minHeight, Math.min(input.scrollHeight, maxHeight));
+
+    input.style.height = `${nextHeight}px`;
+    input.style.overflowY = input.scrollHeight > maxHeight ? "auto" : "hidden";
+}
+
+function resetQuestionInputHeight() {
+    const input = byId("question-input");
+    if (!input) return;
+
+    input.style.height = "";
+    input.style.overflowY = "hidden";
+
+    requestAnimationFrame(resizeQuestionInput);
+}
+
+function formatUploadFileSize(size) {
+    if (!Number.isFinite(size)) return "未知大小";
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    return `${(size / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function setUploadResult(message, type = "info") {
+    const resultEl = byId("upload-result");
+    if (!resultEl) return;
+    resultEl.textContent = message || "";
+    resultEl.className = `upload-result ${type}`;
+}
+
+function openFileUploadModal() {
+    if (!token) {
+        showToast("请先登录后再上传文件");
+        showLoginModal();
+        return;
+    }
+
+    selectedUploadFile = null;
+
+    const fileInput = byId("file-upload-input");
+    const fileNameEl = byId("upload-file-name");
+    const modal = byId("file-upload-modal");
+
+    if (fileInput) fileInput.value = "";
+    if (fileNameEl) fileNameEl.textContent = "暂未选择文件";
+    setUploadResult("");
+
+    const currentScope = document.querySelector('input[name="upload-scope"][value="conversation"]');
+    if (currentScope) currentScope.checked = true;
+
+    if (modal) modal.classList.remove("hidden");
+}
+
+function hideFileUploadModal() {
+    const modal = byId("file-upload-modal");
+    const fileInput = byId("file-upload-input");
+    const fileNameEl = byId("upload-file-name");
+
+    if (modal) modal.classList.add("hidden");
+    if (fileInput) fileInput.value = "";
+    if (fileNameEl) fileNameEl.textContent = "暂未选择文件";
+    selectedUploadFile = null;
+    isFileUploading = false;
+    setUploadResult("");
+}
+
+function chooseUploadFile() {
+    byId("file-upload-input")?.click();
+}
+
+function handleUploadFileChange(event) {
+    const file = event.target.files && event.target.files[0];
+    const fileNameEl = byId("upload-file-name");
+
+    selectedUploadFile = file || null;
+
+    if (!selectedUploadFile) {
+        if (fileNameEl) fileNameEl.textContent = "暂未选择文件";
+        setUploadResult("");
+        return;
+    }
+
+    if (fileNameEl) {
+        fileNameEl.textContent = `${selectedUploadFile.name}（${formatUploadFileSize(selectedUploadFile.size)}）`;
+    }
+    setUploadResult("文件已选择，可以先解析预览，也可以直接上传并导入。", "info");
+}
+
+async function parseSelectedFile() {
+    if (!selectedUploadFile) {
+        setUploadResult("请先选择文件", "error");
+        return;
+    }
+
+    if (isFileUploading) return;
+    isFileUploading = true;
+    setUploadResult("正在解析文件，请稍候......", "info");
+
+    try {
+        const formData = new FormData();
+        formData.append("file", selectedUploadFile);
+
+        const res = await fetch(`${BASE_URL}/file/parse`, {
+            method: "POST",
+            body: formData
+        });
+
+        if (!res.ok) throw new Error(`解析接口响应失败：${res.status}`);
+
+        const result = await res.json();
+        if (result.code !== 200) {
+            setUploadResult(result.msg || "文件解析失败", "error");
+            return;
+        }
+
+        const data = result.data || {};
+        const preview = String(data.content || "").slice(0, 800);
+        setUploadResult(
+            `解析成功：${data.fileName || selectedUploadFile.name}\n` +
+            `类型：${data.fileType || "未知"}\n` +
+            `内容长度：${data.contentLength ?? 0}\n\n` +
+            `${preview}${String(data.content || "").length > 800 ? "\n......" : ""}`,
+            "success"
+        );
+    } catch (err) {
+        console.error("文件解析失败：", err);
+        setUploadResult(`文件解析失败：${err.message}`, "error");
+    } finally {
+        isFileUploading = false;
+    }
+}
+
+async function ensureConversationForFileUpload() {
+    if (currentConversationId) return currentConversationId;
+
+    if (!token) throw new Error("请先登录");
+
+    const params = new URLSearchParams({
+        token,
+        title: "新对话"
+    });
+
+    const res = await fetch(`${BASE_URL}/conversation/create?${params.toString()}`, {
+        method: "POST"
+    });
+
+    if (!res.ok) throw new Error(`创建对话档案失败：${res.status}`);
+
+    const result = await res.json();
+    if (result.code !== 200 || !result.data || !result.data.conversationId) {
+        throw new Error(result.msg || "创建对话档案失败");
+    }
+
+    currentConversationId = result.data.conversationId;
+    setConversationTitle(result.data.title || "新对话");
+    await loadUserHistory();
+    renderHistoryList();
+
+    return currentConversationId;
+}
+
+async function importSelectedFile() {
+    if (!token) {
+        showToast("请先登录后再上传文件");
+        showLoginModal();
+        return;
+    }
+
+    if (!selectedUploadFile) {
+        setUploadResult("请先选择文件", "error");
+        return;
+    }
+
+    if (isFileUploading) return;
+    isFileUploading = true;
+    setUploadResult("正在上传并导入知识库，请稍候......", "info");
+
+    try {
+        const scopeEl = document.querySelector('input[name="upload-scope"]:checked');
+        const isGlobalUpload = scopeEl && scopeEl.value === "global";
+
+        const formData = new FormData();
+        formData.append("file", selectedUploadFile);
+        formData.append("token", token);
+        formData.append("isGlobal", String(isGlobalUpload));
+
+        if (!isGlobalUpload) {
+            const conversationId = await ensureConversationForFileUpload();
+            formData.append("conversationId", conversationId);
+        }
+
+        const res = await fetch(`${BASE_URL}/file/import`, {
+            method: "POST",
+            body: formData
+        });
+
+        if (!res.ok) throw new Error(`上传导入接口响应失败：${res.status}`);
+
+        const result = await res.json();
+        if (result.code !== 200) {
+            setUploadResult(result.msg || "上传导入失败", "error");
+            return;
+        }
+
+        const data = result.data || {};
+        setUploadResult(
+            `上传导入成功：${data.fileName || selectedUploadFile.name}\n` +
+            `导入知识条数：${data.importedCount ?? 0}\n` +
+            `${data.message || ""}`,
+            "success"
+        );
+
+        showToast("文件上传导入成功");
+        if (token) await loadUserHistory();
+    } catch (err) {
+        console.error("文件上传导入失败：", err);
+        setUploadResult(`上传导入失败：${err.message}`, "error");
+    } finally {
+        isFileUploading = false;
+    }
+}
+
 function formatAnswerWithSuffix(answerText) {
     const suffixes = [
         "（知识库信息）",
@@ -1914,12 +2304,16 @@ function setupEvents() {
 
     const input = byId("question-input");
     if (input) {
+        input.addEventListener("input", resizeQuestionInput);
+
         input.addEventListener("keydown", (event) => {
             if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
                 event.preventDefault();
                 sendQuestion();
             }
         });
+
+        resizeQuestionInput();
     }
 
     const renameInput = byId("rename-title-input");
@@ -1974,6 +2368,7 @@ function setupEvents() {
         updateSidebarPushMode();
         closeHistoryMenus();
         closeUserMenu();
+        resizeQuestionInput();
     });
 }
 
