@@ -318,6 +318,97 @@ body.light-theme .sidebar-user-menu-item:hover{background:var(--soft-2)}
     transform:translateX(-50%);
     width:min(92%,780px);
 }
+.hot-questions-panel{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:calc(100% + 14px);
+    z-index:9;
+    padding:14px 16px;
+    border:1px solid var(--border);
+    border-radius:20px;
+    background:var(--card);
+    box-shadow:var(--shadow);
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    transform:translateY(8px);
+    transition:opacity .18s ease,transform .18s ease,visibility .18s ease;
+}
+
+.chat-container.start-mode .input-area.hot-active .hot-questions-panel{
+    opacity:1;
+    visibility:visible;
+    pointer-events:auto;
+    transform:translateY(0);
+}
+
+.hot-questions-title{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:10px;
+}
+
+.hot-questions-title strong{
+    color:var(--text-strong);
+    font-size:15px;
+}
+
+.hot-questions-title span{
+    color:var(--muted);
+    font-size:12px;
+}
+
+.hot-question-list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+
+.hot-question-btn{
+    width:100%;
+    min-height:42px;
+    padding:9px 12px;
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:var(--soft);
+    color:var(--text);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    text-align:left;
+    transition:background .18s ease,border-color .18s ease,transform .18s ease;
+}
+
+.hot-question-btn:hover{
+    background:var(--hover);
+    border-color:#999;
+    transform:translateY(-1px);
+}
+
+.hot-question-rank{
+    width:24px;
+    height:24px;
+    border-radius:999px;
+    background:var(--active);
+    color:var(--text-strong);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:12px;
+    font-weight:700;
+    flex-shrink:0;
+}
+
+.hot-question-text{
+    flex:1;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    font-size:14px;
+}
 .chat-container.start-mode .input-area{
     top:50%;bottom:auto;transform:translate(-50%,-50%);
 }
@@ -1112,6 +1203,43 @@ body.light-theme .cancel-btn:hover{background:#ded8cc}
     .theme-option-btn{width:100%}
     .input-area{bottom:10px;width:calc(100vw - 20px)}
     .chat-container.start-mode .input-area{width:calc(100vw - 24px)}
+    .hot-questions-panel{
+    bottom:calc(100% + 10px);
+        padding:12px;
+        border-radius:18px;
+    }
+
+    .hot-questions-title{
+        margin-bottom:8px;
+    }
+
+    .hot-questions-title strong{
+        font-size:14px;
+    }
+
+    .hot-questions-title span{
+        display:none;
+    }
+
+    .hot-question-list{
+        gap:7px;
+    }
+
+    .hot-question-btn{
+        min-height:40px;
+        padding:8px 10px;
+        border-radius:13px;
+    }
+
+    .hot-question-rank{
+        width:22px;
+        height:22px;
+        font-size:11px;
+    }
+
+    .hot-question-text{
+        font-size:13px;
+    }
     @keyframes inputDropDown{
         from{top:50%;bottom:auto;transform:translate(-50%,-50%)}
         to{top:auto;bottom:10px;transform:translateX(-50%)}
@@ -1449,6 +1577,30 @@ body.light-theme .cancel-btn:hover{background:#ded8cc}
     <div id="greeting" class="greeting-text"></div>
 
     <div class="input-area">
+        <div id="hot-questions-panel" class="hot-questions-panel">
+            <div class="hot-questions-title">
+                <strong>常见问题排行榜</strong>
+                <span>点击即可开始新对话</span>
+            </div>
+
+            <div class="hot-question-list">
+                <button type="button" class="hot-question-btn" data-question="我饿了">
+                    <span class="hot-question-rank">1</span>
+                    <span class="hot-question-text">我饿了</span>
+                </button>
+
+                <button type="button" class="hot-question-btn" data-question="连不上校园网怎么办">
+                    <span class="hot-question-rank">2</span>
+                    <span class="hot-question-text">连不上校园网怎么办</span>
+                </button>
+
+                <button type="button" class="hot-question-btn" data-question="帮我写一首关于华工食堂的诗">
+                    <span class="hot-question-rank">3</span>
+                    <span class="hot-question-text">帮我写一首关于华工食堂的诗</span>
+                </button>
+            </div>
+        </div>
+
         <div class="input-wrapper">
             <textarea id="question-input" placeholder="你好！我是华南理工校园百事通，有任何校园问题都可以问我～"></textarea>
 
@@ -1556,6 +1708,26 @@ let contributionFilterTimer = null;
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 const byId = (id) => document.getElementById(id);
+
+function isMobileInputDevice() {
+    return (
+        window.matchMedia("(max-width: 600px)").matches ||
+        window.matchMedia("(pointer: coarse)").matches ||
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    );
+}
+
+function restoreQuestionInputFocusAfterRequest() {
+    const input = byId("question-input");
+    if (!input || input.disabled) return;
+
+    if (isMobileInputDevice()) {
+        input.blur();
+        return;
+    }
+
+    input.focus();
+}
 
 function showToast(message) {
     const toast = byId("toast-message");
@@ -2625,7 +2797,14 @@ async function sendQuestion() {
     const q = input.value.trim();
     if (!q || isRequesting) return;
 
+    const isMobileMode = isMobileInputDevice();
+
+    hideHotQuestions();
     showChatView();
+
+    if (isMobileMode) {
+        input.blur();
+    }
 
     if (chatContainer.classList.contains("start-mode")) {
         chatContainer.classList.remove("start-mode");
@@ -2694,7 +2873,8 @@ async function sendQuestion() {
         appendAiMessage(answer);
         currentConversation.push({ role: "assistant", content: String(answer) });
         if (token) await loadUserHistory();
-    } catch (err) {
+    } 
+    catch (err) {
         clearTimeout(timer);
         byId(loadingId)?.remove();
 
@@ -2704,11 +2884,12 @@ async function sendQuestion() {
 
         appendAiMessage(msg);
         console.error("发送问题失败：", err);
-    } finally {
+    } 
+    finally {
         isRequesting = false;
         btn.disabled = false;
         input.disabled = false;
-        input.focus();
+        restoreQuestionInputFocusAfterRequest();
         scrollChatToBottom();
     }
 }
@@ -3029,8 +3210,10 @@ function createNewChat(shouldReloadHistory = false) {
         input.value = "";
         input.placeholder = "你好！我是华南理工校园百事通，有任何校园问题都可以问我～";
         resetQuestionInputHeight();
-        input.focus();
+        input.blur();
     }
+
+    hideHotQuestions();
 
     setConversationTitle("新对话");
     renderHistoryList();
@@ -3572,6 +3755,79 @@ function resetQuestionInputHeight() {
     });
 }
 
+function isHotQuestionsAllowed() {
+    const chatContainer = byId("chat-container");
+    const input = byId("question-input");
+
+    return !!(
+        chatContainer &&
+        input &&
+        chatContainer.classList.contains("start-mode") &&
+        !input.disabled &&
+        !isRequesting
+    );
+}
+
+function showHotQuestions() {
+    const inputArea = $(".input-area");
+    if (!inputArea) return;
+
+    if (!isHotQuestionsAllowed()) {
+        hideHotQuestions();
+        return;
+    }
+
+    inputArea.classList.add("hot-active");
+}
+
+function hideHotQuestions() {
+    const inputArea = $(".input-area");
+    if (inputArea) inputArea.classList.remove("hot-active");
+}
+
+function chooseHotQuestion(question) {
+    const input = byId("question-input");
+    if (!input || isRequesting) return;
+
+    input.value = question;
+
+    if (isMobileInputDevice()) {
+        input.blur();
+    }
+
+    resizeQuestionInput();
+    updateQuestionInputScrollbar();
+    hideHotQuestions();
+
+    sendQuestion();
+}
+
+function setupHotQuestions() {
+    const panel = byId("hot-questions-panel");
+    const input = byId("question-input");
+
+    if (!panel || !input) return;
+
+    panel.addEventListener("mousedown", (event) => {
+        event.preventDefault();
+    });
+
+    panel.querySelectorAll(".hot-question-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const question = btn.dataset.question || btn.textContent.trim();
+            chooseHotQuestion(question);
+        });
+    });
+
+    input.addEventListener("focus", showHotQuestions);
+
+    input.addEventListener("blur", () => {
+        setTimeout(() => {
+            hideHotQuestions();
+        }, 120);
+    });
+}
+
 function formatAnswerWithSuffix(answerText) {
     const suffixes = [
         "（知识库信息）",
@@ -3822,20 +4078,26 @@ function setupEvents() {
     }
 
     const input = byId("question-input");
-    if (input) {
-        input.addEventListener("input", handleQuestionInput);
-        input.addEventListener("scroll", updateQuestionInputScrollbar);
+        if (input) {
+            input.addEventListener("input", () => {
+                handleQuestionInput();
+                showHotQuestions();
+            });
 
-        input.addEventListener("keydown", (event) => {
-            if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
-                event.preventDefault();
-                sendQuestion();
-            }
-        });
+            input.addEventListener("scroll", updateQuestionInputScrollbar);
 
-        resizeQuestionInput();
-        setupQuestionScrollbarDrag();
-    }
+            input.addEventListener("keydown", (event) => {
+                if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+                    event.preventDefault();
+                    hideHotQuestions();
+                    sendQuestion();
+                }
+            });
+
+            resizeQuestionInput();
+            setupQuestionScrollbarDrag();
+            setupHotQuestions();
+        }
 
     const renameInput = byId("rename-title-input");
     if (renameInput) {
