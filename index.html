@@ -1550,6 +1550,8 @@ let lockedHistoryScrollTop = 0;
 let questionScrollbarDragging = false;
 let questionScrollbarStartY = 0;
 let questionScrollbarStartScrollTop = 0;
+let feedbackFilterTimer = null;
+let contributionFilterTimer = null;
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
@@ -3712,6 +3714,86 @@ function renderMarkdownToHtml(mdText) {
     return `<div class="markdown">${html}</div>`;
 }
 
+function reloadFeedbackListNow() {
+    clearTimeout(feedbackFilterTimer);
+    loadFeedbackList(false);
+}
+
+function scheduleFeedbackListReload() {
+    clearTimeout(feedbackFilterTimer);
+    feedbackFilterTimer = setTimeout(() => {
+        loadFeedbackList(false);
+    }, 450);
+}
+
+function reloadContributionListNow() {
+    clearTimeout(contributionFilterTimer);
+    loadContributionList(false);
+}
+
+function scheduleContributionListReload() {
+    clearTimeout(contributionFilterTimer);
+    contributionFilterTimer = setTimeout(() => {
+        loadContributionList(false);
+    }, 450);
+}
+
+function setupServiceFilterAutoReload() {
+    [
+        "feedback-filter-status",
+        "feedback-filter-type"
+    ].forEach(id => {
+        const el = byId(id);
+        if (!el) return;
+
+        el.addEventListener("change", reloadFeedbackListNow);
+    });
+
+    [
+        "feedback-filter-username",
+        "feedback-filter-keyword"
+    ].forEach(id => {
+        const el = byId(id);
+        if (!el) return;
+
+        el.addEventListener("input", scheduleFeedbackListReload);
+
+        el.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" && !event.isComposing) {
+                event.preventDefault();
+                reloadFeedbackListNow();
+            }
+        });
+    });
+
+    [
+        "contribution-filter-status"
+    ].forEach(id => {
+        const el = byId(id);
+        if (!el) return;
+
+        el.addEventListener("change", reloadContributionListNow);
+    });
+
+    [
+        "contribution-filter-username",
+        "contribution-filter-category",
+        "contribution-filter-keyword"
+    ].forEach(id => {
+        const el = byId(id);
+        if (!el) return;
+
+        el.addEventListener("input", scheduleContributionListReload);
+
+        el.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" && !event.isComposing) {
+                event.preventDefault();
+                reloadContributionListNow();
+            }
+        });
+    });
+}
+
 function setupEvents() {
     const chat = byId("chat-messages");
     if (chat) {
@@ -3787,6 +3869,8 @@ function setupEvents() {
             });
         });
     });
+
+    setupServiceFilterAutoReload();
 
     document.addEventListener("click", (event) => {
         const sidebar = byId("sidebar");
