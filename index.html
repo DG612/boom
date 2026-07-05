@@ -3007,7 +3007,7 @@ function logout() {
 }
 
 function createNewChat(shouldReloadHistory = false) {
-    hideAuxiliaryPages();
+    showChatView();
     closeHistoryMenus();
     closeUserMenu();
 
@@ -3306,7 +3306,7 @@ async function openConversation(index) {
         return;
     }
 
-    hideAuxiliaryPages();
+    showChatView();
     closeHistoryMenus();
 
     const data = conversations[index];
