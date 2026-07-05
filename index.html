@@ -1201,12 +1201,37 @@ body.light-theme .cancel-btn:hover{background:#ded8cc}
     .settings-content{padding:20px 16px}
     .theme-options{flex-direction:column;gap:10px}
     .theme-option-btn{width:100%}
-    .input-area{bottom:10px;width:calc(100vw - 20px)}
-    .chat-container.start-mode .input-area{width:calc(100vw - 24px)}
+    .input-area{
+        bottom:10px;
+        width:calc(100vw - 20px);
+    }
+
+    body.hot-questions-open .chat-container{
+        z-index:600;
+    }
+
+    .chat-container.start-mode .input-area.hot-active{
+        z-index:650;
+    }
+
+    .chat-container.start-mode .input-area{
+        width:calc(100vw - 20px);
+    }
+
     .hot-questions-panel{
-    bottom:calc(100% + 10px);
+        left:50%;
+        right:auto;
+        width:min(300px, calc(100vw - 96px));
+        max-width:calc(100vw - 96px);
+        bottom:calc(100% + 10px);
         padding:12px;
         border-radius:18px;
+        z-index:700;
+        transform:translate(-50%,8px);
+    }
+
+    .chat-container.start-mode .input-area.hot-active .hot-questions-panel{
+        transform:translate(-50%,0);
     }
 
     .hot-questions-title{
@@ -1226,8 +1251,9 @@ body.light-theme .cancel-btn:hover{background:#ded8cc}
     }
 
     .hot-question-btn{
+        width:100%;
         min-height:40px;
-        padding:8px 10px;
+        padding:8px 12px;
         border-radius:13px;
     }
 
@@ -1239,6 +1265,9 @@ body.light-theme .cancel-btn:hover{background:#ded8cc}
 
     .hot-question-text{
         font-size:13px;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
     }
     @keyframes inputDropDown{
         from{top:50%;bottom:auto;transform:translate(-50%,-50%)}
@@ -3778,11 +3807,14 @@ function showHotQuestions() {
     }
 
     inputArea.classList.add("hot-active");
+    document.body.classList.add("hot-questions-open");
 }
 
 function hideHotQuestions() {
     const inputArea = $(".input-area");
     if (inputArea) inputArea.classList.remove("hot-active");
+
+    document.body.classList.remove("hot-questions-open");
 }
 
 function chooseHotQuestion(question) {
