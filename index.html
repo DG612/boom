@@ -318,29 +318,43 @@ body.light-theme .sidebar-user-menu-item:hover{background:var(--soft-2)}
     transform:translateX(-50%);
     width:min(92%,780px);
 }
+
 .hot-questions-panel{
     position:absolute;
-    left:0;
-    right:0;
+    left:50%;
+    right:auto;
     bottom:calc(100% + 14px);
-    z-index:9;
+    z-index:700;
+
+    width:360px;
+    max-width:calc(100vw - 96px);
+
     padding:14px 16px;
     border:1px solid var(--border);
     border-radius:20px;
     background:var(--card);
     box-shadow:var(--shadow);
+
     opacity:0;
     visibility:hidden;
     pointer-events:none;
-    transform:translateY(8px);
+    transform:translate(-50%,8px);
     transition:opacity .18s ease,transform .18s ease,visibility .18s ease;
+}
+
+body.hot-questions-open .chat-container{
+    z-index:600;
+}
+
+.chat-container.start-mode .input-area.hot-active{
+    z-index:650;
 }
 
 .chat-container.start-mode .input-area.hot-active .hot-questions-panel{
     opacity:1;
     visibility:visible;
     pointer-events:auto;
-    transform:translateY(0);
+    transform:translate(-50%,0);
 }
 
 .hot-questions-title{
@@ -379,6 +393,7 @@ body.light-theme .sidebar-user-menu-item:hover{background:var(--soft-2)}
     align-items:center;
     gap:10px;
     text-align:left;
+    white-space:nowrap;
     transition:background .18s ease,border-color .18s ease,transform .18s ease;
 }
 
@@ -1221,8 +1236,8 @@ body.light-theme .cancel-btn:hover{background:#ded8cc}
     .hot-questions-panel{
         left:50%;
         right:auto;
-        width:min(300px, calc(100vw - 96px));
-        max-width:calc(100vw - 96px);
+        width:320px;
+        max-width:calc(100vw - 72px);
         bottom:calc(100% + 10px);
         padding:12px;
         border-radius:18px;
