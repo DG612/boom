@@ -425,7 +425,7 @@ body.light-theme .sidebar-user-menu-item:hover{background:var(--soft-2)}
 #send-btn:hover{filter:brightness(.94)}
 #send-btn:disabled{background:#bdbdbd;color:#555;cursor:not-allowed}
 
-.profile-page,.settings-page{
+.profile-page,.settings-page,.service-page{
     flex:1;background:var(--bg);color:var(--text);
     display:none;justify-content:center;align-items:center;padding:24px;
 }
@@ -612,6 +612,240 @@ body.light-theme .sidebar-user-menu-item:hover{background:var(--soft-2)}
     color:#555;
     cursor:not-allowed;
 }
+.service-card{
+    width:min(92%,860px);
+    height:min(76vh,680px);
+    padding:24px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:18px;
+    box-shadow:var(--shadow);
+    overflow-y:auto;
+}
+
+.service-header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:18px;
+}
+
+.service-title{
+    font-size:20px;
+    font-weight:700;
+    color:var(--text-strong);
+    margin-bottom:6px;
+}
+
+.service-desc{
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.6;
+}
+
+.service-section-title{
+    font-size:15px;
+    font-weight:700;
+    color:var(--text-strong);
+    margin:16px 0 10px;
+}
+
+.service-form-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:14px;
+}
+
+.service-field{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+}
+
+.service-field-full{
+    grid-column:1 / -1;
+}
+
+.service-field label{
+    font-size:13px;
+    color:var(--muted);
+}
+
+.service-field input,
+.service-field select,
+.service-field textarea,
+.service-filter-row input,
+.service-filter-row select,
+.service-item select,
+.service-item textarea{
+    width:100%;
+    border:1px solid transparent;
+    border-radius:10px;
+    background:var(--soft);
+    color:var(--text);
+    outline:none;
+    font-size:14px;
+    padding:10px 12px;
+}
+
+.service-field input,
+.service-field select,
+.service-filter-row input,
+.service-filter-row select{
+    height:42px;
+}
+
+.service-field textarea,
+.service-item textarea{
+    resize:none;
+    line-height:1.6;
+}
+
+.service-field input:focus,
+.service-field select:focus,
+.service-field textarea:focus,
+.service-filter-row input:focus,
+.service-filter-row select:focus,
+.service-item select:focus,
+.service-item textarea:focus{
+    border-color:#aaa;
+    box-shadow:0 0 0 1px rgba(255,255,255,.12);
+}
+
+.service-actions{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:14px;
+}
+
+.service-tip{
+    margin-right:auto;
+    font-size:12px;
+    color:var(--muted);
+}
+
+.service-primary-btn,
+.service-secondary-btn,
+.service-refresh-btn{
+    min-width:82px;
+    height:38px;
+    border:none;
+    border-radius:12px;
+    font-size:14px;
+    white-space:nowrap;
+}
+
+.service-primary-btn{
+    background:var(--send-bg);
+    color:var(--send-text);
+}
+
+.service-secondary-btn,
+.service-refresh-btn{
+    background:var(--soft);
+    color:var(--text);
+    border:1px solid var(--border);
+}
+
+.service-primary-btn:hover,
+.service-secondary-btn:hover,
+.service-refresh-btn:hover{
+    filter:brightness(.96);
+}
+
+.service-primary-btn:disabled{
+    background:#bdbdbd;
+    color:#555;
+    cursor:not-allowed;
+}
+
+.service-filter-row{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:10px;
+    margin:16px 0 4px;
+}
+
+.service-list{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+
+.service-empty{
+    padding:22px;
+    text-align:center;
+    color:var(--muted);
+    border:1px dashed var(--border);
+    border-radius:14px;
+    background:var(--soft);
+}
+
+.service-item{
+    padding:14px;
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:var(--soft);
+}
+
+.service-item-header{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:8px;
+}
+
+.service-item-title{
+    font-weight:700;
+    color:var(--text-strong);
+    word-break:break-word;
+}
+
+.service-item-meta{
+    flex-shrink:0;
+    font-size:12px;
+    color:var(--muted);
+}
+
+.service-item-content{
+    font-size:14px;
+    color:var(--text);
+    line-height:1.7;
+    white-space:pre-wrap;
+    word-break:break-word;
+    margin:6px 0;
+}
+
+.service-item-footer{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:10px;
+    font-size:12px;
+    color:var(--muted);
+}
+
+.service-status{
+    display:inline-flex;
+    align-items:center;
+    height:24px;
+    padding:0 9px;
+    border-radius:999px;
+    background:var(--active);
+    color:var(--text-strong);
+    font-size:12px;
+}
+
+.service-admin-actions{
+    display:grid;
+    grid-template-columns:150px 1fr auto;
+    gap:10px;
+    align-items:start;
+    margin-top:12px;
+}
 .settings-card{overflow:hidden;display:flex}
 .settings-sidebar{
     width:190px;flex-shrink:0;padding:18px 12px;
@@ -795,7 +1029,7 @@ body.light-theme .cancel-btn:hover{background:#ded8cc}
     .bubble{padding:10px 13px;border-radius:16px;font-size:14px;line-height:1.65}
     .markdown{font-size:14px}
     .markdown h1{font-size:18px}.markdown h2{font-size:17px}.markdown h3{font-size:16px}
-    .profile-page,.settings-page{padding:14px 12px}
+    .profile-page,.settings-page,.service-page{padding:14px 12px}
     .profile-card{
         width:100%;
         min-height:0;
@@ -838,6 +1072,39 @@ body.light-theme .cancel-btn:hover{background:#ded8cc}
     .profile-save-btn{
         flex:1;
     }
+    .service-card{
+        width:100%;
+        height:min(72vh,580px);
+        padding:18px 14px;
+        border-radius:16px;
+    }
+
+    .service-header{
+        flex-direction:column;
+        gap:10px;
+    }
+
+    .service-form-grid,
+    .service-filter-row,
+    .service-admin-actions{
+        grid-template-columns:1fr;
+    }
+
+    .service-actions{
+        flex-wrap:wrap;
+    }
+
+    .service-tip{
+        width:100%;
+        margin-right:0;
+    }
+
+    .service-primary-btn,
+    .service-secondary-btn,
+    .service-refresh-btn{
+        flex:1;
+    }
+
     .settings-card{width:100%;min-height:360px;height:min(68vh,520px);border-radius:16px;flex-direction:column}
     .settings-sidebar{width:100%;padding:12px;border-right:none;border-bottom:1px solid var(--border)}
     .settings-content{padding:20px 16px}
@@ -1024,6 +1291,141 @@ body.light-theme .cancel-btn:hover{background:#ded8cc}
             </div>
         </div>
     </section>
+
+    <section id="feedback-page" class="service-page">
+    <div class="service-card">
+        <div class="service-header">
+            <div>
+                <div class="service-title" id="feedback-page-title">反馈</div>
+                <div class="service-desc" id="feedback-page-desc">提交使用问题、建议或数据纠错反馈。</div>
+            </div>
+            <button type="button" class="service-refresh-btn" onclick="loadFeedbackList(true)">刷新</button>
+        </div>
+
+        <div id="feedback-user-panel" class="service-panel">
+            <div class="service-section-title">提交反馈</div>
+
+            <div class="service-form-grid">
+                <div class="service-field">
+                    <label for="feedback-type">反馈类型</label>
+                    <select id="feedback-type">
+                        <option value="GENERAL">一般反馈</option>
+                        <option value="BUG">功能异常</option>
+                        <option value="SUGGESTION">功能建议</option>
+                        <option value="DATA_ERROR">数据纠错</option>
+                    </select>
+                </div>
+
+                <div class="service-field">
+                    <label for="feedback-contact">联系方式，可选</label>
+                    <input id="feedback-contact" type="text" placeholder="例如 QQ、邮箱、手机号">
+                </div>
+
+                <div class="service-field service-field-full">
+                    <label for="feedback-content">反馈内容</label>
+                    <textarea id="feedback-content" rows="4" maxlength="5000" placeholder="请描述你遇到的问题、建议或需要纠正的数据"></textarea>
+                </div>
+            </div>
+
+            <div class="service-actions">
+                <span class="service-tip">提交后可在下方查看处理状态。</span>
+                <button type="button" class="service-secondary-btn" onclick="clearFeedbackForm()">清空</button>
+                <button type="button" class="service-primary-btn" id="feedback-submit-btn" onclick="submitFeedback()">提交反馈</button>
+            </div>
+        </div>
+
+        <div class="service-filter-row" id="feedback-filter-row">
+            <select id="feedback-filter-status">
+                <option value="">全部状态</option>
+                <option value="OPEN">待处理</option>
+                <option value="PROCESSING">处理中</option>
+                <option value="CLOSED">已关闭</option>
+            </select>
+
+            <select id="feedback-filter-type" class="admin-only-filter">
+                <option value="">全部类型</option>
+                <option value="GENERAL">一般反馈</option>
+                <option value="BUG">功能异常</option>
+                <option value="SUGGESTION">功能建议</option>
+                <option value="DATA_ERROR">数据纠错</option>
+            </select>
+
+            <input id="feedback-filter-username" class="admin-only-filter" type="text" placeholder="按用户筛选">
+            <input id="feedback-filter-keyword" class="admin-only-filter" type="text" placeholder="搜索内容/备注">
+            <button type="button" class="service-secondary-btn" onclick="loadFeedbackList(true)">查询</button>
+        </div>
+
+        <div class="service-section-title" id="feedback-list-title">我的反馈</div>
+        <div id="feedback-list" class="service-list"></div>
+    </div>
+</section>
+
+<section id="contribution-page" class="service-page">
+    <div class="service-card">
+        <div class="service-header">
+            <div>
+                <div class="service-title" id="contribution-page-title">贡献</div>
+                <div class="service-desc" id="contribution-page-desc">提交希望加入公共知识库的候选问答。</div>
+            </div>
+            <button type="button" class="service-refresh-btn" onclick="loadContributionList(true)">刷新</button>
+        </div>
+
+        <div id="contribution-user-panel" class="service-panel">
+            <div class="service-section-title">提交贡献</div>
+
+            <div class="service-form-grid">
+                <div class="service-field service-field-full">
+                    <label for="contribution-question">贡献问题</label>
+                    <input id="contribution-question" type="text" maxlength="500" placeholder="例如：校园卡丢了怎么办？">
+                </div>
+
+                <div class="service-field service-field-full">
+                    <label for="contribution-answer">贡献答案</label>
+                    <textarea id="contribution-answer" rows="5" maxlength="10000" placeholder="请填写你整理出的可靠答案"></textarea>
+                </div>
+
+                <div class="service-field">
+                    <label for="contribution-keywords">关键词，可选</label>
+                    <input id="contribution-keywords" type="text" placeholder="例如：校园卡,补办,一卡通">
+                </div>
+
+                <div class="service-field">
+                    <label for="contribution-category">分类，可选</label>
+                    <input id="contribution-category" type="text" maxlength="128" placeholder="例如：校园卡">
+                </div>
+
+                <div class="service-field service-field-full">
+                    <label for="contribution-source-note">来源说明，可选</label>
+                    <textarea id="contribution-source-note" rows="3" placeholder="例如：来自学校官网、通知文件或个人整理"></textarea>
+                </div>
+            </div>
+
+            <div class="service-actions">
+                <span class="service-tip">提交后需管理员审核，审核通过后才可能进入公共知识库。</span>
+                <button type="button" class="service-secondary-btn" onclick="clearContributionForm()">清空</button>
+                <button type="button" class="service-primary-btn" id="contribution-submit-btn" onclick="submitContribution()">提交贡献</button>
+            </div>
+        </div>
+
+        <div class="service-filter-row" id="contribution-filter-row">
+            <select id="contribution-filter-status">
+                <option value="">全部状态</option>
+                <option value="PENDING">待审核</option>
+                <option value="APPROVED">已通过</option>
+                <option value="IGNORED">已忽略</option>
+                <option value="IMPORTED">已导入</option>
+            </select>
+
+            <input id="contribution-filter-username" class="admin-only-filter" type="text" placeholder="按用户筛选">
+            <input id="contribution-filter-category" class="admin-only-filter" type="text" placeholder="按分类筛选">
+            <input id="contribution-filter-keyword" class="admin-only-filter" type="text" placeholder="搜索问题/答案/关键词">
+            <button type="button" class="service-secondary-btn" onclick="loadContributionList(true)">查询</button>
+        </div>
+
+        <div class="service-section-title" id="contribution-list-title">我的贡献</div>
+        <div id="contribution-list" class="service-list"></div>
+    </div>
+</section>
 
     <section id="settings-page" class="settings-page">
         <div class="settings-card">
@@ -1248,6 +1650,40 @@ function buildProfileBasicLine(profile = currentUserProfile) {
 function formatProfileTime(value) {
     if (!value) return "暂无";
     return String(value).replace("T", " ").slice(0, 16);
+}
+
+function formatDateTime(value) {
+    if (!value) return "暂无";
+    return String(value).replace("T", " ").slice(0, 16);
+}
+
+function feedbackTypeText(type) {
+    const map = {
+        BUG: "功能异常",
+        SUGGESTION: "功能建议",
+        DATA_ERROR: "数据纠错",
+        GENERAL: "一般反馈"
+    };
+    return map[type] || type || "一般反馈";
+}
+
+function feedbackStatusText(status) {
+    const map = {
+        OPEN: "待处理",
+        PROCESSING: "处理中",
+        CLOSED: "已关闭"
+    };
+    return map[status] || status || "未知";
+}
+
+function contributionStatusText(status) {
+    const map = {
+        PENDING: "待审核",
+        APPROVED: "已通过",
+        IGNORED: "已忽略",
+        IMPORTED: "已导入"
+    };
+    return map[status] || status || "未知";
 }
 
 function clearUserInfo() {
@@ -1482,6 +1918,18 @@ function renderSidebarUserMenu() {
         openProfilePage();
     }));
 
+    menu.appendChild(createMenuButton(isAdmin ? "查看反馈" : "反馈", "sidebar-user-menu-item", (e) => {
+        e.stopPropagation();
+        closeUserMenu();
+        openFeedbackPage();
+    }));
+
+    menu.appendChild(createMenuButton(isAdmin ? "查看贡献" : "贡献", "sidebar-user-menu-item", (e) => {
+        e.stopPropagation();
+        closeUserMenu();
+        openContributionPage();
+    }));
+
     menu.appendChild(createMenuButton("设置", "sidebar-user-menu-item", (e) => {
         e.stopPropagation();
         closeUserMenu();
@@ -1548,36 +1996,46 @@ function closeUserMenu() {
     menu.style.visibility = "";
 }
 
+function hideAuxiliaryPages() {
+    ["profile-page", "settings-page", "feedback-page", "contribution-page"].forEach(id => {
+        const page = byId(id);
+        if (page) page.style.display = "none";
+    });
+}
+
 function showChatView() {
     const chatMessages = byId("chat-messages");
     const inputArea = $(".input-area");
-    const profilePage = byId("profile-page");
-    const settingsPage = byId("settings-page");
 
-    if (profilePage) profilePage.style.display = "none";
-    if (settingsPage) settingsPage.style.display = "none";
+    hideAuxiliaryPages();
+
     if (chatMessages) chatMessages.style.display = "";
     if (inputArea) inputArea.style.display = "";
 }
 
-function openProfilePage(event) {
-    if (event) event.stopPropagation();
+function openAuxiliaryPage(pageId, title) {
     closeUserMenu();
     closeHistoryMenus();
 
     const chatContainer = byId("chat-container");
     const chatMessages = byId("chat-messages");
     const inputArea = $(".input-area");
-    const profilePage = byId("profile-page");
-    const settingsPage = byId("settings-page");
 
     if (chatMessages) chatMessages.style.display = "none";
     if (inputArea) inputArea.style.display = "none";
-    if (settingsPage) settingsPage.style.display = "none";
-    if (profilePage) profilePage.style.display = "flex";
-    if (chatContainer) chatContainer.classList.remove("start-mode", "chat-active");
 
-    setConversationTitle("个人信息");
+    hideAuxiliaryPages();
+
+    const page = byId(pageId);
+    if (page) page.style.display = "flex";
+
+    if (chatContainer) chatContainer.classList.remove("start-mode", "chat-active");
+    setConversationTitle(title);
+}
+
+function openProfilePage(event) {
+    if (event) event.stopPropagation();
+    openAuxiliaryPage("profile-page", "个人信息");
     updateSidebarUserInfo();
     loadUserProfile();
 }
@@ -1590,28 +2048,477 @@ function closeProfilePage(restoreChat = true) {
 
 function openSettingsPage(event) {
     if (event) event.stopPropagation();
-    closeUserMenu();
-    closeHistoryMenus();
-
-    const chatContainer = byId("chat-container");
-    const chatMessages = byId("chat-messages");
-    const inputArea = $(".input-area");
-    const profilePage = byId("profile-page");
-    const settingsPage = byId("settings-page");
-
-    if (chatMessages) chatMessages.style.display = "none";
-    if (inputArea) inputArea.style.display = "none";
-    if (profilePage) profilePage.style.display = "none";
-    if (settingsPage) settingsPage.style.display = "flex";
-    if (chatContainer) chatContainer.classList.remove("start-mode", "chat-active");
-
-    setConversationTitle("设置");
+    openAuxiliaryPage("settings-page", "设置");
 }
 
 function closeSettingsPage(restoreChat = true) {
     const settingsPage = byId("settings-page");
     if (settingsPage) settingsPage.style.display = "none";
     if (restoreChat) showChatView();
+}
+
+function openFeedbackPage(event) {
+    if (event) event.stopPropagation();
+
+    if (!token) {
+        showToast("请先登录");
+        showLoginModal();
+        return;
+    }
+
+    openAuxiliaryPage("feedback-page", isAdmin ? "查看反馈" : "反馈");
+
+    const userPanel = byId("feedback-user-panel");
+    const pageTitle = byId("feedback-page-title");
+    const pageDesc = byId("feedback-page-desc");
+    const listTitle = byId("feedback-list-title");
+
+    if (userPanel) userPanel.style.display = isAdmin ? "none" : "block";
+    if (pageTitle) pageTitle.textContent = isAdmin ? "反馈管理" : "我的反馈";
+    if (pageDesc) pageDesc.textContent = isAdmin
+        ? "查看所有用户反馈，并更新处理状态和管理员备注。"
+        : "提交使用问题、功能建议或数据纠错反馈。";
+    if (listTitle) listTitle.textContent = isAdmin ? "全部反馈" : "我的反馈";
+
+    $$("#feedback-page .admin-only-filter").forEach(el => {
+        el.style.display = isAdmin ? "" : "none";
+    });
+
+    loadFeedbackList(false);
+}
+
+function clearFeedbackForm() {
+    const type = byId("feedback-type");
+    const contact = byId("feedback-contact");
+    const content = byId("feedback-content");
+
+    if (type) type.value = "GENERAL";
+    if (contact) contact.value = "";
+    if (content) content.value = "";
+}
+
+async function submitFeedback() {
+    if (!token) {
+        showToast("请先登录");
+        return;
+    }
+
+    const contentEl = byId("feedback-content");
+    const content = contentEl ? contentEl.value.trim() : "";
+
+    if (!content) {
+        showToast("请填写反馈内容");
+        if (contentEl) contentEl.focus();
+        return;
+    }
+
+    const btn = byId("feedback-submit-btn");
+
+    try {
+        if (btn) btn.disabled = true;
+
+        const payload = {
+            username,
+            feedbackType: byId("feedback-type")?.value || "GENERAL",
+            content,
+            contact: byId("feedback-contact")?.value.trim() || null
+        };
+
+        const res = await fetch(`${BASE_URL}/feedback/submit?token=${encodeURIComponent(token)}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error(`提交反馈接口响应失败：${res.status}`);
+
+        const result = await res.json();
+
+        if (result.code !== 200) {
+            showToast(result.msg || "提交反馈失败");
+            return;
+        }
+
+        clearFeedbackForm();
+        showToast("反馈已提交");
+        await loadFeedbackList(false);
+    } catch (err) {
+        console.error("提交反馈失败：", err);
+        showToast("提交反馈失败，请稍后重试");
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+async function loadFeedbackList(showMessage = false) {
+    if (!token) return;
+
+    const list = byId("feedback-list");
+    if (list) list.innerHTML = `<div class="service-empty">正在加载反馈...</div>`;
+
+    try {
+        const params = new URLSearchParams();
+        params.set("token", token);
+        params.set("page", "1");
+        params.set("size", "20");
+
+        const status = byId("feedback-filter-status")?.value || "";
+        if (status) params.set("status", status);
+
+        let url = "";
+
+        if (isAdmin) {
+            const type = byId("feedback-filter-type")?.value || "";
+            const filterUsername = byId("feedback-filter-username")?.value.trim() || "";
+            const keyword = byId("feedback-filter-keyword")?.value.trim() || "";
+
+            if (type) params.set("feedbackType", type);
+            if (filterUsername) params.set("username", filterUsername);
+            if (keyword) params.set("keyword", keyword);
+
+            url = `${BASE_URL}/admin/feedback/list?${params.toString()}`;
+        } else {
+            url = `${BASE_URL}/feedback/my?${params.toString()}`;
+        }
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`反馈列表接口响应失败：${res.status}`);
+
+        const result = await res.json();
+
+        if (result.code !== 200) {
+            if (list) list.innerHTML = `<div class="service-empty">${escapeHtml(result.msg || "读取反馈失败")}</div>`;
+            return;
+        }
+
+        const items = result.data?.items || [];
+        renderFeedbackList(items);
+
+        if (showMessage) showToast("反馈列表已刷新");
+    } catch (err) {
+        console.error("读取反馈列表失败：", err);
+        if (list) list.innerHTML = `<div class="service-empty">读取反馈失败，请稍后重试</div>`;
+    }
+}
+
+function renderFeedbackList(items) {
+    const list = byId("feedback-list");
+    if (!list) return;
+
+    if (!items.length) {
+        list.innerHTML = `<div class="service-empty">暂无反馈记录</div>`;
+        return;
+    }
+
+    list.innerHTML = items.map(item => {
+        const adminActions = isAdmin ? `
+            <div class="service-admin-actions">
+                <select id="feedback-status-${item.id}">
+                    <option value="OPEN" ${item.status === "OPEN" ? "selected" : ""}>待处理</option>
+                    <option value="PROCESSING" ${item.status === "PROCESSING" ? "selected" : ""}>处理中</option>
+                    <option value="CLOSED" ${item.status === "CLOSED" ? "selected" : ""}>已关闭</option>
+                </select>
+                <textarea id="feedback-note-${item.id}" rows="2" placeholder="管理员备注">${escapeHtml(item.adminNote || "")}</textarea>
+                <button type="button" class="service-primary-btn" onclick="updateFeedbackStatus(${item.id})">更新</button>
+            </div>
+        ` : "";
+
+        return `
+            <div class="service-item">
+                <div class="service-item-header">
+                    <div class="service-item-title">${feedbackTypeText(item.feedbackType)}</div>
+                    <div class="service-item-meta">#${item.id} · ${escapeHtml(item.username || "")}</div>
+                </div>
+
+                <div class="service-item-content">${escapeHtml(item.content || "")}</div>
+
+                <div class="service-item-footer">
+                    <span class="service-status">${feedbackStatusText(item.status)}</span>
+                    <span>联系方式：${escapeHtml(item.contact || "无")}</span>
+                    <span>提交时间：${formatDateTime(item.createdAt)}</span>
+                    ${item.adminNote ? `<span>管理员备注：${escapeHtml(item.adminNote)}</span>` : ""}
+                </div>
+
+                ${adminActions}
+            </div>
+        `;
+    }).join("");
+}
+
+async function updateFeedbackStatus(id) {
+    if (!token || !isAdmin) return;
+
+    try {
+        const payload = {
+            id,
+            status: byId(`feedback-status-${id}`)?.value || "OPEN",
+            adminNote: byId(`feedback-note-${id}`)?.value.trim() || null
+        };
+
+        const res = await fetch(`${BASE_URL}/admin/feedback/update?token=${encodeURIComponent(token)}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error(`更新反馈接口响应失败：${res.status}`);
+
+        const result = await res.json();
+
+        if (result.code !== 200) {
+            showToast(result.msg || "更新失败");
+            return;
+        }
+
+        showToast("反馈状态已更新");
+        await loadFeedbackList(false);
+    } catch (err) {
+        console.error("更新反馈状态失败：", err);
+        showToast("更新失败，请稍后重试");
+    }
+}
+
+function openContributionPage(event) {
+    if (event) event.stopPropagation();
+
+    if (!token) {
+        showToast("请先登录");
+        showLoginModal();
+        return;
+    }
+
+    openAuxiliaryPage("contribution-page", isAdmin ? "查看贡献" : "贡献");
+
+    const userPanel = byId("contribution-user-panel");
+    const pageTitle = byId("contribution-page-title");
+    const pageDesc = byId("contribution-page-desc");
+    const listTitle = byId("contribution-list-title");
+
+    if (userPanel) userPanel.style.display = isAdmin ? "none" : "block";
+    if (pageTitle) pageTitle.textContent = isAdmin ? "贡献审核" : "我的贡献";
+    if (pageDesc) pageDesc.textContent = isAdmin
+        ? "查看用户提交的候选问答，并审核为通过或忽略。"
+        : "提交希望加入公共知识库的候选问答，等待管理员审核。";
+    if (listTitle) listTitle.textContent = isAdmin ? "全部贡献" : "我的贡献";
+
+    $$("#contribution-page .admin-only-filter").forEach(el => {
+        el.style.display = isAdmin ? "" : "none";
+    });
+
+    loadContributionList(false);
+}
+
+function clearContributionForm() {
+    ["contribution-question", "contribution-answer", "contribution-keywords", "contribution-category", "contribution-source-note"].forEach(id => {
+        const el = byId(id);
+        if (el) el.value = "";
+    });
+}
+
+async function submitContribution() {
+    if (!token) {
+        showToast("请先登录");
+        return;
+    }
+
+    const questionEl = byId("contribution-question");
+    const answerEl = byId("contribution-answer");
+
+    const question = questionEl ? questionEl.value.trim() : "";
+    const answer = answerEl ? answerEl.value.trim() : "";
+
+    if (!question) {
+        showToast("请填写贡献问题");
+        if (questionEl) questionEl.focus();
+        return;
+    }
+
+    if (!answer) {
+        showToast("请填写贡献答案");
+        if (answerEl) answerEl.focus();
+        return;
+    }
+
+    const btn = byId("contribution-submit-btn");
+
+    try {
+        if (btn) btn.disabled = true;
+
+        const payload = {
+            username,
+            question,
+            answer,
+            keywords: byId("contribution-keywords")?.value.trim() || null,
+            category: byId("contribution-category")?.value.trim() || null,
+            sourceNote: byId("contribution-source-note")?.value.trim() || null
+        };
+
+        const res = await fetch(`${BASE_URL}/contribution/submit?token=${encodeURIComponent(token)}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error(`提交贡献接口响应失败：${res.status}`);
+
+        const result = await res.json();
+
+        if (result.code !== 200) {
+            showToast(result.msg || "提交贡献失败");
+            return;
+        }
+
+        clearContributionForm();
+        showToast("贡献已提交，等待审核");
+        await loadContributionList(false);
+    } catch (err) {
+        console.error("提交贡献失败：", err);
+        showToast("提交贡献失败，请稍后重试");
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+async function loadContributionList(showMessage = false) {
+    if (!token) return;
+
+    const list = byId("contribution-list");
+    if (list) list.innerHTML = `<div class="service-empty">正在加载贡献...</div>`;
+
+    try {
+        const params = new URLSearchParams();
+        params.set("token", token);
+        params.set("page", "1");
+        params.set("size", "20");
+
+        const status = byId("contribution-filter-status")?.value || "";
+        if (status) params.set("status", status);
+
+        let url = "";
+
+        if (isAdmin) {
+            const filterUsername = byId("contribution-filter-username")?.value.trim() || "";
+            const category = byId("contribution-filter-category")?.value.trim() || "";
+            const keyword = byId("contribution-filter-keyword")?.value.trim() || "";
+
+            if (filterUsername) params.set("username", filterUsername);
+            if (category) params.set("category", category);
+            if (keyword) params.set("keyword", keyword);
+
+            url = `${BASE_URL}/admin/contribution/list?${params.toString()}`;
+        } else {
+            url = `${BASE_URL}/contribution/my?${params.toString()}`;
+        }
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`贡献列表接口响应失败：${res.status}`);
+
+        const result = await res.json();
+
+        if (result.code !== 200) {
+            if (list) list.innerHTML = `<div class="service-empty">${escapeHtml(result.msg || "读取贡献失败")}</div>`;
+            return;
+        }
+
+        const items = result.data?.items || [];
+        renderContributionList(items);
+
+        if (showMessage) showToast("贡献列表已刷新");
+    } catch (err) {
+        console.error("读取贡献列表失败：", err);
+        if (list) list.innerHTML = `<div class="service-empty">读取贡献失败，请稍后重试</div>`;
+    }
+}
+
+function renderContributionList(items) {
+    const list = byId("contribution-list");
+    if (!list) return;
+
+    if (!items.length) {
+        list.innerHTML = `<div class="service-empty">暂无贡献记录</div>`;
+        return;
+    }
+
+    list.innerHTML = items.map(item => {
+        const adminActions = isAdmin ? `
+            <div class="service-admin-actions">
+                <select id="contribution-action-${item.id}">
+                    <option value="APPROVE">审核通过</option>
+                    <option value="IGNORE">忽略贡献</option>
+                </select>
+                <textarea id="contribution-note-${item.id}" rows="2" placeholder="管理员审核备注">${escapeHtml(item.adminNote || "")}</textarea>
+                <button type="button" class="service-primary-btn" onclick="reviewContribution(${item.id})">提交审核</button>
+            </div>
+        ` : "";
+
+        return `
+            <div class="service-item">
+                <div class="service-item-header">
+                    <div class="service-item-title">${escapeHtml(item.question || "")}</div>
+                    <div class="service-item-meta">#${item.id} · ${escapeHtml(item.username || "")}</div>
+                </div>
+
+                <div class="service-item-content">${escapeHtml(item.answer || "")}</div>
+
+                <div class="service-item-footer">
+                    <span class="service-status">${contributionStatusText(item.status)}</span>
+                    <span>分类：${escapeHtml(item.category || "无")}</span>
+                    <span>关键词：${escapeHtml(item.keywords || "无")}</span>
+                    <span>提交时间：${formatDateTime(item.createdAt)}</span>
+                    ${item.sourceNote ? `<span>来源：${escapeHtml(item.sourceNote)}</span>` : ""}
+                    ${item.adminNote ? `<span>管理员备注：${escapeHtml(item.adminNote)}</span>` : ""}
+                    ${item.reviewedBy ? `<span>审核人：${escapeHtml(item.reviewedBy)}</span>` : ""}
+                </div>
+
+                ${adminActions}
+            </div>
+        `;
+    }).join("");
+}
+
+async function reviewContribution(id) {
+    if (!token || !isAdmin) return;
+
+    try {
+        const payload = {
+            id,
+            action: byId(`contribution-action-${id}`)?.value || "APPROVE",
+            adminNote: byId(`contribution-note-${id}`)?.value.trim() || null
+        };
+
+        const res = await fetch(`${BASE_URL}/admin/contribution/review?token=${encodeURIComponent(token)}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error(`审核贡献接口响应失败：${res.status}`);
+
+        const result = await res.json();
+
+        if (result.code !== 200) {
+            showToast(result.msg || "审核失败");
+            return;
+        }
+
+        showToast(payload.action === "APPROVE" ? "贡献已通过" : "贡献已忽略");
+        await loadContributionList(false);
+    } catch (err) {
+        console.error("审核贡献失败：", err);
+        showToast("审核失败，请稍后重试");
+    }
 }
 
 function showSettingsPanel(panelName) {
@@ -2100,8 +3007,7 @@ function logout() {
 }
 
 function createNewChat(shouldReloadHistory = false) {
-    closeProfilePage();
-    closeSettingsPage();
+    hideAuxiliaryPages();
     closeHistoryMenus();
     closeUserMenu();
 
@@ -2400,8 +3306,7 @@ async function openConversation(index) {
         return;
     }
 
-    closeProfilePage();
-    closeSettingsPage();
+    hideAuxiliaryPages();
     closeHistoryMenus();
 
     const data = conversations[index];
